@@ -51,6 +51,9 @@ scripts/              Strumenti da riga di comando
 | `scripts/analyze-bootimg.sh` | Estrae offset, cmdline, pagesize e dtb da un `boot.img` |
 | `scripts/pmos-connect.sh` | Collegamento SSH/telnet al telefono via USB (172.16.42.1) |
 | `scripts/check-host.sh` | Controlla che sul PC ci siano tutti gli strumenti necessari |
+| `scripts/setup-tools.sh` | Installa mtkclient e MiUnlockTool in ambienti Python separati |
+| `scripts/mtk-backup.sh` | Backup di tutte le partizioni MediaTek via BROM (bootloader bloccato, senza root) |
+| `scripts/android-debloat.sh` | Alleggerisce Android via adb, in modo reversibile (`--restore`) |
 
 ## Regole del dossier
 
