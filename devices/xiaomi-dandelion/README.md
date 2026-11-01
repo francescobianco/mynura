@@ -77,7 +77,7 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 | Wi-Fi | ❔ | MediaTek connsys (combo wifi/BT integrato): sui downstream di solito è il punto più difficile |
 | Bluetooth | ❔ | |
 | Audio | ❔ | |
-| Modem (chiamate/SMS/dati) | ❔ | |
+| Modem (chiamate/SMS/dati) | ❔ | Su Android stock: chiamate ✅ con CoopVoce (rete TIM) dopo ~10 min dall'inserimento della SIM, via 2G (VoLTE spento). Vedi diario |
 | GPS | ❔ | |
 | Fotocamera | ❔ | |
 | Sensori | ❔ | |
@@ -108,6 +108,34 @@ _Da compilare quando il metodo è stato provato._
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-01 — Modem su Android stock: SIM CoopVoce (@francesco)
+
+Verifica del modem su Android, da usare come riferimento per il port. Operatore: **CoopVoce**, operatore virtuale
+(MVNO) su rete **TIM**: SIM `222 53`, rete registrata `222 10`. Configurazione dual SIM `dsds`, SIM nello slot 1.
+
+- La SIM viene riconosciuta subito (`gsm.sim.state=LOADED`), con voce e dati `IN_SERVICE` su LTE.
+- Prime chiamate in uscita fallite. Dal log di `dumpsys telecom`:
+  ```
+  5 chiamate in uscita tra le 12:09 e le 12:16, nessuna arriva a SET_ACTIVE
+  2 finite con DisconnectCause ERROR (CM_SER_UNAVAILABLE) dopo ~60 s di composizione
+  3 interrotte dall'utente (LOCAL)
+  ```
+- Causa probabile: **VoLTE disattivato** (`persist.vendor.mtk.volte.enable=0`). Senza VoLTE la chiamata deve passare
+  dal 4G al 2G (CSFB), perché il 3G di TIM è spento, e con segnale debole il passaggio fallisce.
+- Segnale LTE: all'inizio `rsrp=-115` dBm (livello 2/4), dopo qualche minuto `rsrp=-99` dBm.
+- ✅ **Dopo circa 10 minuti dall'inserimento della SIM le chiamate funzionano**: tempo di attivazione lato operatore
+  più il miglioramento del segnale. Chiamata di prova alle 12:21: `SET_DIALING` → `SET_ACTIVE` in 8 s,
+  conversazione regolare, chiusa dall'altra parte (`DisconnectCause REMOTE`). VoLTE ancora spento, quindi
+  la chiamata è passata dal 2G.
+- Comandi utili per ripetere la verifica:
+  ```bash
+  adb shell getprop gsm.sim.state; adb shell getprop gsm.network.type
+  adb shell dumpsys telephony.registry | grep -m1 -oE 'mVoiceRegState=[^,]*|rsrp=-?[0-9]+'
+  adb shell dumpsys telecom | grep -E ' - (SET_DIALING|SET_ACTIVE|SET_DISCONNECTED)|callTerminationReason'
+  ```
+- **Per postmarketOS**: il modem MediaTek con kernel downstream è un punto critico. Senza VoLTE, l'unica via per le
+  chiamate in Italia su TIM/CoopVoce è il 2G (CSFB). Annotare se il modem in pmOS riesce a fare CSFB o VoLTE.
 
 ### 2026-11-01 — Alleggerimento di MIUI via adb (@francesco)
 
