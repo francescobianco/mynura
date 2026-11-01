@@ -1,0 +1,1 @@
+Linux localhost 4.9.190-perf-gafd7236 #1 SMP PREEMPT Wed Jul 21 16:48:16 CST 2021 armv8l

@@ -1,0 +1,9 @@
+Physical size: 720x1600
+Physical density: 320
+/sys/class/drm/:
+card0
+controlD64
+renderD128
+
+/sys/class/graphics/:
+fb0

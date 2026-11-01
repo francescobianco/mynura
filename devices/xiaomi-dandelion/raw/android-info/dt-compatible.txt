@@ -1,0 +1,1 @@
+/system/bin/sh: can't open /proc/device-tree/compatible: Permission denied

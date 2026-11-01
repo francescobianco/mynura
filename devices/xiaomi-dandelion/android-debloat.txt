@@ -1,0 +1,57 @@
+# Pacchetti rimossi da MIUI 12 (dandelion_eea) per alleggerire Android.
+# Usato da: ./scripts/android-debloat.sh devices/xiaomi-dandelion/android-debloat.txt
+# Rimozione solo per l'utente 0: reversibile con --restore o con un ripristino di fabbrica.
+#
+# NON aggiungere: com.xiaomi.account, com.miui.cloudservice*, com.xiaomi.finddevice,
+# com.miui.securitycenter, com.miui.securitycore, com.miui.guardprovider, com.miui.home,
+# com.miui.system, com.miui.rom, com.miui.core, com.xiaomi.xmsf, com.miui.powerkeeper, com.google.android.gms*
+# (servono per lo sblocco del bootloader con Mi Unlock, o rischi un bootloop)
+
+# --- Pubblicità e telemetria MIUI
+com.miui.msa.global
+com.miui.analytics
+com.miui.daemon
+com.miui.bugreport
+com.miui.hybrid
+com.miui.hybrid.accessory
+com.miui.yellowpage
+com.miui.miservice
+com.miui.audiomonitor
+com.debug.loggerui
+
+# --- Negozi / promozioni Xiaomi
+com.xiaomi.mipicks
+com.xiaomi.discover
+com.xiaomi.glgm
+com.mipay.wallet.in
+com.xiaomi.payment
+com.miui.android.fashiongallery
+com.mi.globalbrowser
+com.miui.cleanmaster
+
+# --- Condivisione / cast Xiaomi
+com.xiaomi.midrop
+com.xiaomi.miplay_client
+com.xiaomi.mi_connect_service
+com.milink.service
+com.xiaomi.upnp
+com.miui.touchassistant
+
+# --- Facebook preinstallato
+com.facebook.appmanager
+com.facebook.services
+com.facebook.system
+
+# --- Google superflui
+com.google.android.apps.subscriptions.red
+com.google.android.projection.gearhead
+com.google.ar.lens
+com.google.android.apps.turbo
+com.google.android.apps.wellbeing
+
+# --- Operatori non pertinenti
+de.telekom.tsc
+
+# --- Varie
+com.android.egg
+com.android.dreams.basic

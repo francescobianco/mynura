@@ -1,0 +1,3 @@
+mt6765
+mt6762
+armeabi-v7a,armeabi
