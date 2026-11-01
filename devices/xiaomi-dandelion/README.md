@@ -91,7 +91,7 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 3. [ ] Scaricare il firmware fastboot stock della stessa versione MIUI ed estrarre `boot.img`, `vbmeta.img`
 4. [ ] `./scripts/analyze-bootimg.sh xiaomi-dandelion <boot.img stock>`
 5. [ ] Cercare port esistenti (wiki, pmaports, MR, chat) per dandelion/angelica/MT6765
-6. [ ] Sbloccare il bootloader (Mi Unlock) — **cancella i dati**
+6. [ ] Sbloccare il bootloader (Mi Unlock) — **cancella i dati**. ⏳ Possibile dal 2026-11-08 ~12:08
 7. [x] Backup delle partizioni nvram/nvdata/persist (mtkclient via BROM, 2026-11-01)
 8. [ ] `pmbootstrap init` → nuovo dispositivo `xiaomi-dandelion`, kernel downstream
 9. [ ] Primo boot: `pmbootstrap flasher boot` (dalla RAM, senza scrivere) e cercare la rete USB
@@ -108,6 +108,21 @@ _Da compilare quando il metodo è stato provato._
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-01 — Mi Unlock: conto alla rovescia avviato (@francesco)
+
+> ⏳ **Sblocco possibile da domenica 2026-11-08, circa alle 12:08** (167 ore dalla verifica delle 13:08 del 2026-11-01).
+
+- Strumento: MiUnlockTool (`~/.local/share/mynura-tools/venv-miunlock/bin/miunlock`), su Linux, con il telefono in
+  fastboot. Region account `IT`, dataCenterZone `Europe`.
+- Primo tentativo: `code 20041` — "your MI ID is not associated with a phone number". Il problema non era la SIM del
+  telefono: all'account Mi mancava un numero di telefono. Risolto aggiungendolo su
+  <https://account.xiaomi.com/pass/serviceLogin?checkSafePhone=true>.
+- Secondo tentativo: `code 20036` — "Please unlock 167 hours later".
+- ⚠️ **Non rimuovere e non riaggiungere l'account Mi in MIUI** ("Stato Mi Unlock"), altrimenti l'attesa riparte da capo.
+- Attenzione: la richiesta "Press 'Enter' to continue — unlock" compare **sempre**. Dopo l'Invio, se l'attesa è finita,
+  il telefono viene sbloccato e **cancellato** subito.
+- Quando scade l'attesa: telefono in fastboot, si rilancia `miunlock`. Il backup BROM è già fatto.
 
 ### 2026-11-01 — Backup completo delle partizioni via BROM con mtkclient (@francesco)
 
