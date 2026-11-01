@@ -4,7 +4,8 @@
 set -euo pipefail
 
 TOOLS="${MYNURA_TOOLS:-$HOME/.local/share/mynura-tools}"
-MTK="$TOOLS/venv-mtk/bin/mtk"
+# Il comando "mtk" installato da pip è rotto (punta a mtkclient.mtk, che non esiste): usiamo mtk.py
+MTK=("$TOOLS/venv-mtk/bin/python" "$TOOLS/mtkclient/mtk.py")
 SKIP_DEFAULT="userdata,super,cache"
 
 usage() {
@@ -32,25 +33,29 @@ skip="$SKIP_DEFAULT"; copy_to=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --skip) skip="$2"; shift 2 ;;
-        --copy-to) copy_to="$2"; shift 2 ;;
+        --copy-to) copy_to="$(realpath -m "$2")"; shift 2 ;;
         *) echo "Opzione sconosciuta: $1" >&2; exit 1 ;;
     esac
 done
 
-[[ -x "$MTK" ]] || { echo "mtkclient non installato: ./scripts/setup-tools.sh mtkclient" >&2; exit 1; }
+[[ -x "${MTK[0]}" && -f "${MTK[1]}" ]] || { echo "mtkclient non installato: ./scripts/setup-tools.sh mtkclient" >&2; exit 1; }
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 out="$root/devices/$codename/raw/backup/mtk-$(date +%F)"
 mkdir -p "$out"
 
+# mtkclient scrive .state e hwparam.json (con meid/socid/cid univoci) nella cartella corrente:
+# lavoriamo dentro la cartella del backup, che è esclusa da git
+cd "$out"
+
 echo "Spegni il telefono, poi tieni premuti Vol Su + Vol Giù e collega il cavo..."
-"$MTK" printgpt 2>&1 | tee "$out/gpt.txt"
+"${MTK[@]}" printgpt 2>&1 | tee "$out/gpt.txt"
 echo
 echo "Lettura di tutte le partizioni tranne: $skip"
 echo "Ricollega il telefono nello stesso modo se richiesto."
-"$MTK" rl "$out" --skip "$skip" 2>&1 | tee "$out/mtk-rl.log"
+"${MTK[@]}" rl "$out" --skip "$skip" 2>&1 | tee "$out/mtk-rl.log"
 
-(cd "$out" && sha256sum -- *.bin > SHA256SUMS) || echo "ATTENZIONE: checksum non calcolati"
+sha256sum -- *.bin > SHA256SUMS || echo "ATTENZIONE: checksum non calcolati"
 echo
 ls -la "$out"
 for p in nvram nvdata nvcfg persist protect1 protect2 proinfo; do

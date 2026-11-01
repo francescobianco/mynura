@@ -10,7 +10,7 @@ usage() {
 Uso: $(basename "$0") [mtkclient|miunlock|all]   (default: all)
 
 Installa in $TOOLS (cambia cartella con MYNURA_TOOLS=...):
-  mtkclient   https://github.com/bkerler/mtkclient     -> $TOOLS/venv-mtk/bin/mtk
+  mtkclient   https://github.com/bkerler/mtkclient     -> $TOOLS/venv-mtk/bin/python $TOOLS/mtkclient/mtk.py
   miunlock    https://github.com/MiForge/MiUnlockTool  -> $TOOLS/venv-miunlock/bin/miunlock
 
 Per mtkclient servono le regole udev (una volta sola, chiede sudo):
@@ -36,7 +36,7 @@ if [[ "$what" == all || "$what" == mtkclient ]]; then
     venv-mtk/bin/pip install -q -U pip
     venv-mtk/bin/pip install -q -r mtkclient/requirements.txt
     venv-mtk/bin/pip install -q -e mtkclient
-    echo "  ok: $TOOLS/venv-mtk/bin/mtk"
+    echo "  ok: $TOOLS/venv-mtk/bin/python $TOOLS/mtkclient/mtk.py"
 fi
 
 if [[ "$what" == all || "$what" == miunlock ]]; then

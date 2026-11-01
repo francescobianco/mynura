@@ -15,3 +15,7 @@ devices/*/raw/bootimg/
 # Varie
 *.log.tmp
 .env
+
+# File generati da mtkclient nella cartella corrente: contengono meid/socid/cid univoci
+.state
+hwparam.json

@@ -92,7 +92,7 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 4. [ ] `./scripts/analyze-bootimg.sh xiaomi-dandelion <boot.img stock>`
 5. [ ] Cercare port esistenti (wiki, pmaports, MR, chat) per dandelion/angelica/MT6765
 6. [ ] Sbloccare il bootloader (Mi Unlock) — **cancella i dati**
-7. [ ] Backup delle partizioni nvram/nvdata/persist (mtkclient o root)
+7. [x] Backup delle partizioni nvram/nvdata/persist (mtkclient via BROM, 2026-11-01)
 8. [ ] `pmbootstrap init` → nuovo dispositivo `xiaomi-dandelion`, kernel downstream
 9. [ ] Primo boot: `pmbootstrap flasher boot` (dalla RAM, senza scrivere) e cercare la rete USB
 
@@ -108,6 +108,24 @@ _Da compilare quando il metodo è stato provato._
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-01 — Backup completo delle partizioni via BROM con mtkclient (@francesco)
+
+- `./scripts/setup-tools.sh` e poi `./scripts/mtk-backup.sh xiaomi-dandelion --copy-to <disco esterno>`.
+  **Funziona con bootloader bloccato e senza root.**
+- Ingresso in BROM: telefono spento (Accensione premuto 10-15 s), **Vol Su + Vol Giù** premuti mentre si collega il
+  cavo. Il PC vede `0e8d:0003` (BROM). Lo schermo resta nero.
+- Info dal SoC (mtkclient): `MT6765/MT8768t`, HW code `0x766`, **SBC, SLA e DAA attivi**, ma mtkclient li aggira
+  ("Security check patched") e carica il proprio DA.
+- `printgpt` funziona al primo colpo. Per la seconda fase (`rl`) bisogna **ricollegare il telefono in BROM**, altrimenti
+  si vede `Handshake failed` in loop.
+- ModemManager fermato prima (`sudo systemctl stop ModemManager`): può occupare la porta `ttyACM`.
+- Il comando `mtk` installato da pip è rotto (`No module named 'mtkclient.mtk'`): lo script usa `python mtk.py`.
+- Risultato: 42 partizioni, 1,6 GB (escluse `userdata`, `super`, `cache`), tutte con sha256. Presenti `nvram`, `nvdata`,
+  `nvcfg`, `persist`, `protect1/2`, `proinfo`, `seccfg`, `md1img`, `boot`, `recovery`, `lk`, `dtbo`, `vbmeta*`.
+  Copia verificata su un disco esterno. **Non versionato.**
+- Nota: mtkclient può anche sbloccare il bootloader direttamente (`mtk da seccfg unlock`), senza attendere Mi Unlock.
+  Lo teniamo come piano B.
 
 ### 2026-11-01 — Modem su Android stock: SIM CoopVoce (@francesco)
 
