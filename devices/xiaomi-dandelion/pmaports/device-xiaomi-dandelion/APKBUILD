@@ -2,7 +2,7 @@
 pkgname=device-xiaomi-dandelion
 pkgdesc="Xiaomi Redmi 9A / 9AT"
 pkgver=1
-pkgrel=1
+pkgrel=7
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -16,6 +16,13 @@ makedepends="devicepkg-dev"
 source="
 	deviceinfo
 	kernel-cmdline.conf
+	xorg.conf
+	dandelion-sxmo.sh
+	sxmo-deviceprofile.sh
+	sxmo_autosuspend.service
+	upower-dandelion.conf
+	focaltech_ts_fw_helitai.bin
+	30-touch-firmware.files
 "
 
 build() {
@@ -24,8 +31,31 @@ build() {
 
 package() {
 	devicepkg_package $startdir $pkgname
+	install -Dm644 "$srcdir"/xorg.conf \
+		"$pkgdir"/etc/X11/xorg.conf.d/10-dandelion.conf
+	install -Dm644 "$srcdir"/dandelion-sxmo.sh \
+		"$pkgdir"/etc/profile.d/dandelion-sxmo.sh
+	install -Dm755 "$srcdir"/sxmo-deviceprofile.sh \
+		"$pkgdir"/usr/bin/sxmo_deviceprofile_mediatek,MT6765.sh
+	install -Dm644 "$srcdir"/sxmo_autosuspend.service \
+		"$pkgdir"/etc/superd/services/sxmo_autosuspend.service
+	install -Dm644 "$srcdir"/upower-dandelion.conf \
+		"$pkgdir"/etc/UPower/UPower.conf.d/90-dandelion.conf
+	# Firmware del touch FT8006S-AA, estratto dalla partizione vendor del telefono
+	install -Dm644 "$srcdir"/focaltech_ts_fw_helitai.bin \
+		"$pkgdir"/lib/firmware/focaltech_ts_fw_helitai.bin
+	# Il driver lo chiede a 2 s dall'avvio: deve stare anche nell'initramfs
+	install -Dm644 "$srcdir"/30-touch-firmware.files \
+		-t "$pkgdir"/usr/share/mkinitfs/files
 }
 sha512sums="
 f28441d58f83c20d287c4ef1f82a4d2fd1f3a8b6d5656bd425caf0abb5ae5775b8a957d28e3a40f3e6a79aea8a8108701de11fde0757f9a93cae332dcf710409  deviceinfo
 e245ec464934acce55b2c8e5a9bdb51e6542dbb018c9a08bda365dac72ea9d2b3d4547ab96db9c244bfe90cc531282fe64e4105b41e6d9fec2fd68c0f2143b05  kernel-cmdline.conf
+7d4b184e2b56bda03e4d68b9941357be92873d25a9c475877c5e150e6536ca43784c59eaedee1da20d31091b655d3ea3faa788087611b5a1ab657681671cd99c  xorg.conf
+e110eb8971fe6d9fbe3372911b39fcaeb60a91e24679a74121a1ec2fdde8cdb18ae60a547059bbd2ce30d4afbbc524a5abd559bf6362e3e9d48d10785d6e1665  dandelion-sxmo.sh
+c8a2d57a37ca538ec3fb8b974585d41c4b0e7feb28adcc0b880da46de9aff7cba9ee45d7fce2a3ecff3b1d2c37a5182ea79951b1ac43e8035313a3e135db46ee  sxmo-deviceprofile.sh
+8f9ab65735b4d2568fed1082bba1fc1db0a62903249a6e6d4aa87954938bae9c76955acef473daff7c107983a8743e33629cfcb13dfd77437770fbe953522e9f  sxmo_autosuspend.service
+d350dc085a84b4ee469861fe5286b111d0186eb0539773467adaaa9ba454efb6bcbbb5a728de3281e84024972564b36ba9651d9e86c7cd09f44f95807a9d210c  upower-dandelion.conf
+ef5fb971d1fac6d49f5f7a23312aad6f559c062b6202b9e47f69890fa6dbcf3a9dc6145874ed997577f47a8a7645476390d3190b0667009b347647e9b344607e  focaltech_ts_fw_helitai.bin
+2a620616b7d4153c7c150727cc25052fcecb97b0f3ca35211a34654007a9992a57b45914f7a086299e4ede7f734bbf728cdc01c10a6d35aeba0d405955eddc01  30-touch-firmware.files
 "

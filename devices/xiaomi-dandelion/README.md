@@ -70,8 +70,8 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 |---|---|---|
 | Avvio kernel | ✅ | 4.9.190 con initramfs (2026-11-09) |
 | Rete USB / SSH | ✅ | `ssh francesco@172.16.42.1`, circa 3 minuti dopo il riavvio |
-| Display | ❔ | |
-| Touchscreen | ❔ | |
+| Display | ✅ | Sxmo dwm tramite `mtkfb` e X11 `fbdev` |
+| Touchscreen | ✅ | `fts_ts` con firmware `focaltech_aa_ts_fw_helitai.bin` dalla partizione `vendor`, incluso nell'initramfs. Scala 720×1600 corretta |
 | Tasti fisici | ❔ | |
 | Storage interno / SD | ⚠️ | eMMC ✅, rootfs in `userdata` esteso a 21,5 GB. SD non provata |
 | Batteria / ricarica | ⚠️ | `status` = Charging, ma `capacity` = -1: livello non letto |
@@ -135,6 +135,24 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-09 — Sxmo dwm parte e resta acceso, touch e tasti ancora da sistemare (Claude per @francesco)
+
+- Interfaccia scelta: `sxmo-de-dwm`, con X11 sul framebuffer (`xorg.conf` con driver `fbdev`). Schermo funzionante.
+- **Ciclo di riavvii, tre cause in fila.** `wireplumber` manda il kernel in Oops in `mtk_pcm_dl2_params`: audio disattivato
+  con `SXMO_NO_AUDIO=1`. Poi uno spegnimento ordinato circa 25 s dopo X (`openrc shutdown`, nessun panic): `upower` vede la
+  batteria allo 0% perché `capacity` = -1 e fa l'azione critica. Risolto con `UPower.conf.d/90-dandelion.conf`
+  (`CriticalPowerAction=Ignore`): **senza spegnimento automatico a batteria scarica**. Sospensione di Sxmo disattivata per prudenza.
+- **Avvio da 3 minuti a circa 15 s.** GPU e touch chiedevano firmware assenti, con 60 s di attesa a tentativo (tre per la
+  GPU). `CONFIG_FW_LOADER_USER_HELPER_FALLBACK` non basta, il Kconfig MediaTek la riattiva: `prepare()` porta `loading_timeout` a 1 s.
+- Aggiunto il profilo Sxmo `sxmo_deviceprofile_mediatek,MT6765.sh`; il warning sparisce.
+- **Touch:** nessun evento. Il controller `ft8006s` cerca `focaltech_ts_fw_helitai.bin`, che manca. Letta `super` via BROM ed
+  estratta `vendor`: contiene `firmware/focaltech_aa_ts_fw_helitai.bin` e `..._ab_...`. Il telefono riporta `chip id = 0x8632`
+  (`_FT8006S_AA`), quindi va usata la **AA**, installata col nome richiesto dal driver. Il file sta in
+  `raw/backup/firmware/` e non è nel repo. In `/lib/firmware` non basta: il driver lo chiede a 2 s dall'avvio, quindi va
+  anche nell'initramfs (`30-touch-firmware.files`). Con quello: `fw download successfully`, interrupt ed eventi arrivano,
+  il cursore segue il dito. L'errore `fts_fw_recovery: check boot id fail` subito dopo il download non impedisce il funzionamento.
+- **Tasti:** `bonsaid` fallisce con `Unable to initialize socket: Operation not supported`. Causa da capire.
 
 ### 2026-11-09 — 🎉 Sistema completo avviato, SSH funzionante (Claude per @francesco)
 

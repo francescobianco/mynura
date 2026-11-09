@@ -69,12 +69,18 @@ git -C "$sheat" checkout -q "$sheat_commit"
 device_pkg="$aports/device/testing/device-xiaomi-dandelion"
 kernel_pkg="$aports/device/testing/linux-xiaomi-dandelion"
 mkdir -p "$device_pkg" "$kernel_pkg"
-cp "$dossier/pmaports/device-xiaomi-dandelion/"{APKBUILD,deviceinfo,kernel-cmdline.conf} "$device_pkg/"
+cp "$dossier/pmaports/device-xiaomi-dandelion/"{APKBUILD,deviceinfo,kernel-cmdline.conf,xorg.conf,dandelion-sxmo.sh,sxmo-deviceprofile.sh,sxmo_autosuspend.service,upower-dandelion.conf,30-touch-firmware.files} "$device_pkg/"
+# Il firmware del touch viene dal telefono e non è nel repo: vedi il diario del dossier
+fw_touch="$dossier/raw/backup/firmware/focaltech_ts_fw_helitai.bin"
+[[ -f "$fw_touch" ]] || die "manca $fw_touch: va estratto dalla partizione vendor (focaltech_aa_ts_fw_helitai.bin)"
+cp "$fw_touch" "$device_pkg/"
 cp "$sheat/linux-xiaomi-dandelion/"* "$kernel_pkg/"
-# Il nostro APKBUILD sostituisce quello di partenza
-if [[ -f "$dossier/pmaports/linux-xiaomi-dandelion/APKBUILD" ]]; then
-    cp "$dossier/pmaports/linux-xiaomi-dandelion/APKBUILD" "$kernel_pkg/APKBUILD"
-fi
+# I nostri APKBUILD e config sostituiscono quelli di partenza
+for f in APKBUILD config-xiaomi-dandelion.aarch64; do
+    if [[ -f "$dossier/pmaports/linux-xiaomi-dandelion/$f" ]]; then
+        cp "$dossier/pmaports/linux-xiaomi-dandelion/$f" "$kernel_pkg/$f"
+    fi
+done
 echo "Copiati in $aports/device/testing/"
 
 step "4/6 pmbootstrap init"

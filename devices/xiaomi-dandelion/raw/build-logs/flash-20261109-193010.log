@@ -1,0 +1,25 @@
+Sending 'boot' (65536 KB)                          OKAY [  1.655s]
+Writing 'boot'                                     OKAY [  0.894s]
+Finished. Total time: 2.551s
+Invalid sparse file format at header magic
+Sending sparse 'userdata' 1/9 (117862 KB)          OKAY [  3.085s]
+Writing 'userdata'                                 OKAY [ 11.024s]
+Sending sparse 'userdata' 2/9 (131069 KB)          OKAY [  3.319s]
+Writing 'userdata'                                 OKAY [  1.957s]
+Sending sparse 'userdata' 3/9 (127470 KB)          OKAY [  3.236s]
+Writing 'userdata'                                 OKAY [  2.098s]
+Sending sparse 'userdata' 4/9 (128505 KB)          OKAY [  3.285s]
+Writing 'userdata'                                 OKAY [  2.643s]
+Sending sparse 'userdata' 5/9 (130839 KB)          OKAY [  3.379s]
+Writing 'userdata'                                 OKAY [  3.149s]
+Sending sparse 'userdata' 6/9 (125285 KB)          OKAY [  3.240s]
+Writing 'userdata'                                 OKAY [  2.745s]
+Sending sparse 'userdata' 7/9 (131069 KB)          OKAY [  3.347s]
+Writing 'userdata'                                 OKAY [  2.502s]
+Sending sparse 'userdata' 8/9 (125796 KB)          OKAY [  3.183s]
+Writing 'userdata'                                 OKAY [  1.957s]
+Sending sparse 'userdata' 9/9 (33020 KB)           OKAY [  0.841s]
+Writing 'userdata'                                 OKAY [  2.571s]
+Finished. Total time: 58.793s
+Rebooting                                          OKAY [  0.000s]
+Finished. Total time: 0.050s

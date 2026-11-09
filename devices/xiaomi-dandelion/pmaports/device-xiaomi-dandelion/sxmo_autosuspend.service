@@ -1,0 +1,7 @@
+[Unit]
+Description=sospensione automatica disattivata su dandelion: il telefono si riavvia
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/bin/sleep 2147483647
