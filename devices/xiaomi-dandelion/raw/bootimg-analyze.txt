@@ -1,0 +1,45 @@
+# Analisi di boot.bin (backup BROM mtk-2026-11-01) — 2026-11-09
+# Checksum verificato con SHA256SUMS del backup.
+# Header letto a mano con Python: pmbootstrap e unpack_bootimg non erano installati,
+# quindi analyze-bootimg.sh non e' stato eseguito.
+
+## Header Android
+magic            ANDROID!
+header_version   2
+header_size      1660
+pagesize         2048
+kernel_size      9935154    kernel_addr   0x40080000
+ramdisk_size     756731     ramdisk_addr  0x51b00000
+second_size      0          second_addr   0x40f00000
+dtb_size         97249      dtb_addr      0x47880000
+tags_addr        0x47880000
+os_version       Android 10, patch 2021-07
+cmdline          bootopt=64S3,32N2,64N2 buildvariant=user
+
+## Contenuto
+kernel           gzip (Image.gz) con dtb accodato all'offset 9837969, lunghezza 97185
+ramdisk          gzip
+header MTK       assente su kernel e ramdisk
+sezione dtb      NON e' un dtb nudo: tabella Android DT (magic 0xd7b7ab1e),
+                 32 byte di header + 1 voce da 32 byte, poi il dtb a offset 64.
+                 Il dtb interno e' identico byte per byte a quello accodato al kernel.
+compatible       mediatek,MT6765
+
+## Valori proposti per il deviceinfo (base = kernel_addr - 0x8000)
+deviceinfo_flash_method="fastboot"
+deviceinfo_header_version="2"
+deviceinfo_flash_pagesize="2048"
+deviceinfo_flash_offset_base="0x40078000"
+deviceinfo_flash_offset_kernel="0x00008000"
+deviceinfo_flash_offset_ramdisk="0x11a88000"
+deviceinfo_flash_offset_second="0x00e88000"
+deviceinfo_flash_offset_tags="0x07808000"
+deviceinfo_flash_offset_dtb="0x07808000"
+deviceinfo_bootimg_mtk_mkimage="false"
+deviceinfo_kernel_cmdline="bootopt=64S3,32N2,64N2 buildvariant=user"
+deviceinfo_flash_fastboot_partition_vbmeta="vbmeta"
+deviceinfo_flash_fastboot_partition_dtbo="dtbo"
+
+## Pannello (da expdb.bin, log di LK)
+we will use lcm: ft8006s_vdo_hdp_boe_helitai_drv
+ft8006s id0 = 0x32, id1 = 0x31, id2 = 0x1

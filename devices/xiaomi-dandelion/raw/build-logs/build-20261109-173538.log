@@ -1,0 +1,14 @@
+[17:35:38] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:35:38] [94mNOTE:[0m The failed command's output is above the ^^^ line in the log file: /home/francesco/.local/var/pmbootstrap/log.txt[0m
+[17:35:38] [91mERROR:[0m Command failed (exit code 32): % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/mnt/rootfs_xiaomi-dandelion/sys/devices[0m
+[17:35:38] See also: <https://postmarketos.org/troubleshooting>[0m
+
+Run 'pmbootstrap log' for details.
+
+Before you report this error, ensure that pmbootstrap is up to date.
+Find the latest version here: https://gitlab.postmarketos.org/postmarketOS/pmbootstrap/-/tags
+Your version: 3.12.1
+[92mChannel[0m: edge (pmaports: main, dirty)
+[92mDevice[0m:  xiaomi-dandelion (aarch64)
+[92mUI[0m:      console
+[92msystemd[0m: no (openrc selected in pmbootstrap init)

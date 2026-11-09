@@ -1,0 +1,30 @@
+[17:25:05] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:25:06] Building [94m1[0m package[0m
+[17:25:06]    [94m*[0m edge/linux-xiaomi-dandelion[0m
+[17:25:06] [93m=> (1/1)[0m [94medge/linux-xiaomi-dandelion[0m: Installing dependencies[0m
+[17:25:06] Initializing x86_64 buildroot[0m
+[17:25:06] (native) Creating chroot[0m
+[17:25:07] (native) install abuild apk-tools build-base ccache git pigz[0m
+[17:25:09] (native) install ccache-cross-symlinks abuild gcc-aarch64 g++-aarch64[0m
+[17:25:10] (native) install openssl-dev perl bison bash python3 devicepkg-dev flex findutils bc[0m
+[17:25:11] [93m=>[0m [94medge/linux-xiaomi-dandelion[0m: Building package (cross compiling: cross-native)[0m
+[17:26:13] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:26:13] [93m=>[0m [94medge/linux-xiaomi-dandelion[0m: Done![0m
+[17:26:13] [93m=>[0m [92mFinished building packages[0m
+[17:26:13] [92mDONE![0m[0m
+[17:26:14] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:26:14] Building [94m1[0m package[0m
+[17:26:14]    [94m*[0m edge/device-xiaomi-dandelion[0m
+[17:26:14] [93m=> (1/1)[0m [94medge/device-xiaomi-dandelion[0m: Installing dependencies[0m
+[17:26:14] Initializing aarch64 buildroot[0m
+[17:26:15] (native) Creating chroot[0m
+[17:26:16] (native) install qemu-aarch64[0m
+[17:26:17] (buildroot_aarch64) Creating chroot[0m
+[17:26:18] (buildroot_aarch64) install abuild apk-tools build-base ccache git pigz[0m
+[17:26:20] (native) install ccache-cross-symlinks abuild gcc-aarch64 g++-aarch64 crossdirect[0m
+[17:26:21] (buildroot_aarch64) install devicepkg-dev[0m
+[17:26:22] [93m=>[0m [94medge/device-xiaomi-dandelion[0m: Building package (cross compiling: crossdirect)[0m
+[17:26:27] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:26:27] [93m=>[0m [94medge/device-xiaomi-dandelion[0m: Done![0m
+[17:26:27] [93m=>[0m [92mFinished building packages[0m
+[17:26:27] [92mDONE![0m[0m

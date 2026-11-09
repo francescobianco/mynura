@@ -54,6 +54,8 @@ scripts/              Strumenti da riga di comando
 | `scripts/setup-tools.sh` | Installa mtkclient e MiUnlockTool in ambienti Python separati |
 | `scripts/mtk-backup.sh` | Backup di tutte le partizioni MediaTek via BROM (bootloader bloccato, senza root) |
 | `scripts/android-debloat.sh` | Alleggerisce Android via adb, in modo reversibile (`--restore`) |
+| `scripts/port-xiaomi-dandelion.sh` | Installa pmbootstrap, prepara i pacchetti di xiaomi-dandelion e compila, senza toccare il telefono |
+| `scripts/first-boot-xiaomi-dandelion.sh` | Crea il sistema e tenta l'avvio dalla RAM. **Su dandelion l'avvio dalla RAM non funziona**: vedi il dossier |
 
 ## Regole del dossier
 

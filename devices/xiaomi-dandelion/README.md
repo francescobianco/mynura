@@ -13,17 +13,18 @@
 | SoC | MediaTek Helio G25: `ro.boot.hardware=mt6762`, `ro.board.platform=mt6765` ✅ |
 | Architettura | **kernel arm64**, userspace Android a 32 bit (`armeabi-v7a`) → per pmOS: `aarch64` ✅ |
 | RAM / Storage | 2 GB (`MemTotal` 1,8 GB) ✅ / 32 GB eMMC (`mmcblk0`) |
-| Display | 720×1600, densità 320 ✅. Pannello: uno di 11 driver LCM compilati (`nt36525b`, `ft8006s`, `hx83102d`, `ili9882n`, `icnl9911c`…): quale sia il nostro si vede dal dmesg/cmdline (serve root) |
+| Display | 720×1600, densità 320 ✅. Pannello: `ft8006s_vdo_hdp_boe_helitai_drv` ✅ (log di LK in `expdb`). Altri esemplari possono montare uno degli altri driver LCM compilati |
 | Bootloader | fastboot (Vol Giù + Accensione) |
 | Sblocco bootloader | Mi Unlock ufficiale (account Mi associato, attesa di giorni). Alternativa MediaTek: mtkclient via BROM ⚠️ |
 | Firmware Android | MIUI V12.0.5.0.QCDEUTI (EEA), Android 10, patch build 2021 ✅ |
 | Partizioni | Niente A/B. **Partizioni dinamiche** (`super`), `boot`=p33, `recovery`=p2, `dtbo`, `vbmeta`, `vbmeta_system`, `vbmeta_vendor`, `userdata`=p41 ✅ (`raw/android-info/by-name.txt`) |
-| Stato bootloader | **Bloccato** (`flash.locked=1`, `verifiedbootstate=green`), `sys.oem_unlock_allowed=0` → attivare "Sblocco OEM" nelle Opzioni sviluppatore ✅ |
+| Stato bootloader | **Sbloccato** dal 2026-11-09 (`unlocked: yes`, `secure: no`) ✅ |
 | Recovery custom | TWRP non ufficiale? ⚠️ da cercare |
-| Kernel downstream | **4.9.190** (`4.9.190-perf-gafd7236`, clang 9, build 2021-07-21) ✅. Config completa in `raw/android-info/kernel-config.txt`. dtb: `mediatek/mt6765` accodato + overlay `mediatek/dandelion` in `dtbo`. Sorgenti: <https://github.com/MiCode/Xiaomi_Kernel_OpenSource> (cerca il branch `dandelion-*`) |
+| Kernel downstream | **4.9.190** (`4.9.190-perf-gafd7236`, clang 9, build 2021-07-21) ✅. Config completa in `raw/android-info/kernel-config.txt`. dtb: `mediatek/mt6765` accodato + overlay `mediatek/dandelion` in `dtbo`. Sorgenti: <https://github.com/MiCode/Xiaomi_Kernel_OpenSource>, branch `dandelion-q-oss` ✅ |
 | Supporto mainline | MT6765 ha solo un supporto minimo in mainline: per ora la strada è il **downstream** |
-| Pagina wiki pmOS | da cercare: <https://wiki.postmarketos.org/wiki/Devices> |
-| Pacchetti pmaports | da cercare in pmaports (anche nei merge request aperti) prima di crearne di nuovi |
+| Pagina wiki | non verificata: il wiki (ora `wiki.nura.eco`) blocca gli accessi automatici, va aperto da browser |
+| Pacchetti pmaports | nessun port di dandelion o MT6765 né merge request (controllato il 2026-11-09). Riferimento vicino: `device/testing/device-xiaomi-lancelot` (MT6769, kernel `linux-postmarketos-mediatek-mt6768`) |
+| Tentativo precedente | <https://github.com/SheatNoisette/postmarket_redmi_9a> (fermo al 2023, non avvia). Utile per le patch `drvgen` a Python 3 e la config del kernel |
 
 ## Note specifiche MediaTek / Xiaomi
 
@@ -67,13 +68,13 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 
 | Funzione | Stato | Note |
 |---|---|---|
-| Avvio kernel | ❔ | |
-| Rete USB / SSH | ❔ | |
+| Avvio kernel | ✅ | 4.9.190 con initramfs (2026-11-09) |
+| Rete USB / SSH | ✅ | `ssh francesco@172.16.42.1`, circa 3 minuti dopo il riavvio |
 | Display | ❔ | |
 | Touchscreen | ❔ | |
 | Tasti fisici | ❔ | |
-| Storage interno / SD | ❔ | |
-| Batteria / ricarica | ❔ | |
+| Storage interno / SD | ⚠️ | eMMC ✅, rootfs in `userdata` esteso a 21,5 GB. SD non provata |
+| Batteria / ricarica | ⚠️ | `status` = Charging, ma `capacity` = -1: livello non letto |
 | Wi-Fi | ❔ | MediaTek connsys (combo wifi/BT integrato): sui downstream di solito è il punto più difficile |
 | Bluetooth | ❔ | |
 | Audio | ❔ | |
@@ -88,26 +89,159 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 
 1. [x] Leggere versione MIUI / RAM del nostro esemplare
 2. [x] `./scripts/collect-android-info.sh xiaomi-dandelion` (senza root, prima di sbloccare)
-3. [ ] Scaricare il firmware fastboot stock della stessa versione MIUI ed estrarre `boot.img`, `vbmeta.img`
-4. [ ] `./scripts/analyze-bootimg.sh xiaomi-dandelion <boot.img stock>`
-5. [ ] Cercare port esistenti (wiki, pmaports, MR, chat) per dandelion/angelica/MT6765
-6. [ ] Sbloccare il bootloader (Mi Unlock) — **cancella i dati**. ⏳ Possibile dal 2026-11-08 ~12:08
+3. [x] Ottenere `boot.img` e `vbmeta.img` stock: usati quelli del backup BROM, stessa versione del telefono
+4. [x] Analizzare il boot.img: `raw/bootimg-analyze.txt` (header letto a mano, vedi diario)
+5. [x] Cercare port esistenti in pmaports, MR e GitHub (resta da controllare il wiki da browser e le chat)
+6. [x] Sbloccare il bootloader (Mi Unlock), 2026-11-09: `fastboot getvar unlocked` → `yes`
 7. [x] Backup delle partizioni nvram/nvdata/persist (mtkclient via BROM, 2026-11-01)
-8. [ ] `pmbootstrap init` → nuovo dispositivo `xiaomi-dandelion`, kernel downstream
-9. [ ] Primo boot: `pmbootstrap flasher boot` (dalla RAM, senza scrivere) e cercare la rete USB
+8. [x] `pmbootstrap init` → nuovo dispositivo `xiaomi-dandelion`, kernel downstream. Bozza di `deviceinfo` e cmdline in `pmaports/device-xiaomi-dandelion/`. La base del kernel è il port di SheatNoisette (sorgenti `dandelion-q-oss`, patch `drvgen`, config con `DEVTMPFS` e `VT` già attivi)
+9. [x] Primo boot e rete USB: riuscito scrivendo `boot` con footer AVB (l'avvio dalla RAM non funziona su questo telefono)
+10. [x] Scrivere il rootfs in `userdata` e avviare il sistema completo (2026-11-09): SSH funzionante
+11. [ ] Automatizzare il footer AVB nel port, così `pmbootstrap flasher` produce un boot.img già avviabile
+12. [ ] Display e console sullo schermo
+13. [ ] Batteria, Wi-Fi, modem
 
 ## Come si flasha
 
-_Da compilare quando il metodo è stato provato._
+`fastboot boot` **non funziona**: LK risponde `OKAY` ma poi va in panic, anche con il boot.img stock.
+
+Il boot.img va scritto nella partizione `boot` con un footer AVB, altrimenti LK va in panic (`g_boot_info.hdr_loaded`).
+`vbmeta` non è stato necessario toccarla.
+
+```bash
+avbtool add_hash_footer --image boot.img --partition_name boot --partition_size 67108864
+fastboot flash boot boot.img
+fastboot reboot
+```
+
+Il rootfs va in `userdata`, con l'immagine completa di `pmbootstrap install`. Il `fastboot` del PC la divide da solo in blocchi
+(`max-download-size` 128 MB), senza bisogno di `deviceinfo_flash_sparse`:
+
+```bash
+fastboot flash userdata ~/.local/var/pmbootstrap/chroot_native/home/pmos/rootfs/xiaomi-dandelion.img
+```
+
+Il telefono si presenta come `18d1:d001`, indirizzo `172.16.42.1`, SSH dopo circa 3 minuti. Senza rootfs compare invece la
+shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il footer: va fatto a mano o automatizzato nel port.
 
 ## Problemi aperti
 
 - [x] Confermare codename, SoC e architettura sul nostro esemplare
-- [ ] Capire quale pannello LCM monta il nostro esemplare
+- [x] Capire quale pannello LCM monta il nostro esemplare
+- [x] Capire se LK accetta `fastboot boot` da RAM su questo telefono: **no**. Riceve l'immagine ma va in panic, anche con il boot.img stock (2026-11-09)
+- [ ] Provare l'avvio scrivendo l'immagine nella partizione `boot`
+- [x] Decidere come fornire il dtb: entrambi i modi, come nello stock
 
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-09 — 🎉 Sistema completo avviato, SSH funzionante (Claude per @francesco)
+
+- `fastboot flash userdata` dell'immagine da 1,19 GB, 5 blocchi, 35 s. Gli UUID di `boot` e `root` coincidevano con il
+  boot.img già scritto, quindi non è servito ricostruire nulla.
+- Dopo il riavvio SSH si apre in circa 3 minuti: `Nura edge`, `Linux xiaomi-dandelion 4.9.190-perf`, aarch64, `/` da
+  21,5 GB, 96 MB di RAM usati su 1772. Output in `raw/build-logs/first-ssh-*.txt`.
+- Da verificare: `capacity` della batteria a -1, interfacce modem `ccmni*` presenti ma spente, nessuna interfaccia Wi-Fi
+  (i moduli connsys non sono caricati), `chronyd` in stato crashed. Sullo schermo resta il logo Redmi.
+
+### 2026-11-09 — 🎉 Il kernel parte: rete USB e shell di debug (Claude per @francesco)
+
+- Aggiunto il footer AVB con `avbtool add_hash_footer` (`--partition_size 67108864`, algoritmo NONE) e riscritta solo `boot`
+  (sha256 `35735d38…`). `vbmeta` non toccata. Al riavvio LK mostra "Orange State" e avvia il kernel.
+- 15 s dopo il riavvio il PC vede `18d1:d001`, interfaccia con `172.16.42.2`, ping OK. Il display resta sul logo Redmi.
+- Dopo circa 3 minuti l'initramfs non trova il rootfs (mai scritto, atteso) ed entra nella shell di debug: telnet 172.16.42.1:23.
+- Da lì: `Linux 4.9.190-perf`, gcc 15.2.0, RAM 1,8 GB, 47 nodi `mmcblk*`, `/dev/fb0` a 720×1600, UDC `musb-hdrc`.
+  Output in `raw/build-logs/first-telnet-*.txt`.
+- Il log dell'initramfs segnala moduli `vfat` e `uinput` assenti: non bloccano il boot, da guardare poi.
+
+### 2026-11-09 — Scrittura della partizione `boot` (Claude per @francesco)
+
+- `fastboot flash boot raw/backup/pmos-boot-20261109-174227.img` (sha256 `c40f9e25…`), ramdisk gzip, `vbmeta` non toccata.
+  Scrittura `OKAY`, poi `fastboot reboot`.
+- Il telefono sparisce dalla USB alle 18:02:05 e non ricompare per oltre 2 minuti: né Android, né fastboot, né rete USB.
+- Per tornare allo stock: in fastboot, `fastboot flash boot raw/backup/mtk-2026-11-01/boot.bin`.
+- Ciclo di riavvii. Log da `expdb` (via BROM), in ogni giro:
+  ```
+  avb_footer.c:41: ERROR: Footer magic is incorrect.
+  avb_slot_verify.c:742: ERROR: boot: Error verifying vbmeta image: invalid vbmeta header
+  [avb] ret = 2 / boot state: orange  ("Your device will boot in 5 seconds")
+  [6348] panic (...): ASSERT at (platform/common/boot/boot_info.c:341): g_boot_info.hdr_loaded
+  lk_wdt_dump(): watchdog timeout in LK....
+  ```
+  Il kernel anche qui non parte. LK si aspetta un footer AVB in fondo alla partizione `boot`, che il nostro boot.img non ha.
+- `fastboot oem poweroff` spegne il telefono da fastboot. Il modo più comodo per la BROM: telefono in fastboot, tenere premuti
+  Vol Su + Vol Giù e lanciare `fastboot reboot`.
+
+### 2026-11-09 — Il log di `expdb`: panic in LK, il kernel non parte (Claude per @francesco)
+
+- Letta `expdb` via BROM in sola lettura (`mtk.py r expdb`, file in `raw/backup/`). Il log di LK riporta la nostra cmdline
+  e `decompress_kernel` riuscito, poi:
+  ```
+  ERROR: EMI info incorrect
+  ERROR: debug info base and size incorrect
+  panic (caller 0x48023c6f): ERROR: root node search failed , while(1)
+  lk_wdt_dump(): watchdog timeout in LK....
+  ```
+- Il panic compare **in entrambi i tentativi**, quindi il ramdisk non c'entra: il kernel non è mai stato avviato. Gzip resta
+  necessario per questo kernel, ma non era la causa. Il riavvio in Android arriva dal watchdog di LK, dopo circa 10 s.
+- Il problema è nella preparazione del device tree da parte di LK. Stringhe utili in `lk.bin`: `can't find v2 dtb`,
+  `main dtb is not packed with valid fdt format!`, `prepare_kernel_dtb`.
+- Prova di controllo: `fastboot boot` del boot.img **stock** del backup. **Stesso panic** (terzo caso in `expdb`, con
+  `Command: bootopt=64S3,32N2,64N2 buildvariant=user`). Il difetto è quindi nel percorso `fastboot boot` di questo LK, non
+  nella nostra immagine: su questo telefono l'avvio dalla RAM non si può usare.
+- Attenzione: `fastboot boot` risponde comunque `OKAY`, e il telefono torna su Android dopo il watchdog di LK. Non è un segno
+  che l'immagine sia partita.
+- Per entrare in BROM: spegnere dal menu di Accensione, poi Vol Su + Vol Giù mentre si collega il cavo. Passando da un
+  riavvio forzato si finisce facilmente in fastboot.
+
+### 2026-11-09 — Primo avvio dalla RAM: il telefono torna su Android (@francesco, con Claude)
+
+- `./scripts/first-boot-xiaomi-dandelion.sh`. `fastboot boot` risponde `Sending OKAY`, `Booting OKAY` (ma vedi la voce
+  sopra: LK va poi in panic). Il telefono si sconnette e dopo 65 s ricompare come `2717:ff40`, cioè Android stock. Nessuna rete USB.
+- Il boot.img generato ha header, indirizzi e dtb uguali allo stock. Differenza sospetta: il ramdisk è **zstd**, mentre la
+  config del kernel ha solo `CONFIG_RD_GZIP`. Con `CONFIG_PANIC_TIMEOUT=1`, un panic riavvierebbe subito in Android.
+  **Ipotesi, non ancora verificata**: aggiunto `deviceinfo_initfs_compression="gzip"`.
+- Altra differenza: `os_version` a 0 nel nostro boot.img. Da guardare se gzip non basta.
+- Se non basta: i log di LK e del kernel dovrebbero finire in `expdb`, leggibile via BROM con mtkclient.
+
+### 2026-11-09 — Prima compilazione del kernel (@francesco, con Claude)
+
+- `./scripts/port-xiaomi-dandelion.sh`, da un terminale vero (con il prefisso `!` di Claude Code non si può rispondere a
+  `sudo` e `init`). Kernel e pacchetto del dispositivo compilati al primo colpo in circa 7 minuti.
+- Ostacoli di `pmbootstrap`: serve `kpartx` sul PC e pmaports deve avere come remote il vecchio URL
+  `gitlab.postmarketos.org`. Con kernel 4.9 il service manager va impostato a **openrc**: systemd richiede 5.4+.
+- `vmlinuz` è un `Image.gz-dtb`, come nello stock, ma il pacchetto non conteneva un dtb in `/boot/dtbs`. Senza,
+  `boot-deploy` si fermerebbe con header v2. Ora l'APKBUILD installa `mediatek/mt6765.dtb` avvolto nella tabella Android
+  DT dello stock, e `deviceinfo_append_dtb` è `false` per non accodarlo due volte.
+- Il dtb compilato differisce dallo stock per pochi valori: ricarica al freddo (JEITA) più alta nel sorgente pubblico
+  (1,5 A contro 1,38 A; 540 mA contro 430 mA; soglia 15 °C contro 17 °C). Riportati ai valori stock in `prepare()`.
+  Resta una differenza innocua: `g_FG_PSEUDO100` 99 contro 100.
+
+### 2026-11-09 — Sblocco del bootloader con Mi Unlock (Claude per @francesco)
+
+- Prima dello sblocco: `sha256sum -c` del backup BROM, 42 file su 42 OK.
+- Primo tentativo con `miunlock` 1.7.4: `code 10005` — "Invalid nonce param". Il nonce è monouso e lo strumento lo
+  riusava per la seconda chiamata. Telefono rimasto bloccato e intatto.
+- Corretto upstream lo stesso giorno. Con `miunlock` **1.7.5** (`git pull` nel clone e `pip install ./MiUnlockTool` nel
+  venv): "Unlock successful". Il telefono si è riavviato da solo, ha cancellato i dati ed è comparsa la scritta MIUI.
+- Verifica al rientro in fastboot: `unlocked: yes`, `secure: no`.
+- Dopo la cancellazione il Debug USB è di nuovo spento, ma per il port basta la modalità fastboot.
+
+### 2026-11-09 — Analisi del boot.img e ricerca di port esistenti (Claude per @francesco)
+
+- Bootloader ancora bloccato (`fastboot getvar`: `unlocked: no`, `secure: yes`). Telefono in fastboot, batteria 4,38 V.
+- `boot.bin` del backup: header **v2**, pagesize 2048, base `0x40078000`, nessun header MTK. `pmbootstrap` e
+  `unpack_bootimg` non sono installati, quindi l'header è stato letto a mano. Dettagli e `deviceinfo` proposto in
+  `raw/bootimg-analyze.txt`.
+- Il dtb compare **due volte**: accodato al `Image.gz` e nella sezione dtb, dove è avvolto in una tabella Android DT
+  (magic `0xd7b7ab1e`, 64 byte in testa). Un `mkbootimg --dtb` con un dtb nudo produrrebbe un'immagine diversa dallo stock.
+- Tentativo di SheatNoisette: usa lo stesso kernel (`dandelion-q-oss`, commit `8974b91`) ma `header_version="0"` e
+  nessun dtb accodato, mentre lo stock ha header v2 e dtb. **Ipotesi, non verificata**: potrebbe essere il motivo per
+  cui lì il bootloader non caricava il kernel.
+- Pannello trovato nei log di LK dentro `expdb`: `ft8006s_vdo_hdp_boe_helitai_drv`.
+- Il progetto postmarketOS ora si chiama **Nura**: `gitlab.postmarketos.org` reindirizza a `gitlab.nura.eco`, il wiki a
+  `wiki.nura.eco`.
 
 ### 2026-11-01 — Mi Unlock: conto alla rovescia avviato (@francesco)
 

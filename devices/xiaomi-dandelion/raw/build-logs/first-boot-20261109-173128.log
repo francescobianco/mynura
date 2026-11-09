@@ -1,0 +1,47 @@
+[17:31:30] (rootfs_xiaomi-dandelion) install device-xiaomi-dandelion[0m
+[17:31:31] (rootfs_xiaomi-dandelion) install postmarketos-mkinitfs[0m
+[17:31:31] (rootfs_xiaomi-dandelion) mkinitfs[0m
+[17:31:35] INFO: config-xiaomi-dandelion.aarch64 has suboptimal configuration (category:default), run 'pmbootstrap kconfig check' for details![0m
+[17:31:35] (native) boot xiaomi-dandelion kernel[0m
+[17:31:35] (native) install android-tools-avbtool android-tools-fastboot android-tools-mkbootimg[0m
+Sending 'boot.img' (19990 KB)                      OKAY [  0.508s]
+Booting                                            OKAY [  0.048s]
+Finished. Total time: 0.585s
+[17:31:37] You will get an IP automatically assigned to your USB interface shortly.[0m
+[17:31:37] Then you can connect to your device using ssh after pmOS has booted:[0m
+[17:31:37] ssh francesco@172.16.42.1[0m
+[17:31:37] [94mNOTE:[0m If you enabled full disk encryption, you should make sure that Unl0kr has been properly configured for your device[0m
+[17:31:37] [94mNOTE:[0m chroot is still active (use 'pmbootstrap shutdown' as necessary)[0m
+[17:31:37] [92mDONE![0m[0m
+flasher boot: codice di uscita 0
+--- esito rete USB: no
+--- lsusb
+Bus 001 Device 023: ID 2717:ff40 Xiaomi Inc. Mi/Redmi series (MTP)
+--- interfacce
+nessuna interfaccia USB
+--- dmesg del PC
+[ 2477.297900] vethbc65fe5: renamed from eth0
+[ 2477.350605] docker0: port 1(veth1a8546f) entered disabled state
+[ 2477.351201] veth1a8546f (unregistering): left allmulticast mode
+[ 2477.351204] veth1a8546f (unregistering): left promiscuous mode
+[ 2477.351206] docker0: port 1(veth1a8546f) entered disabled state
+[ 2598.956901] Bluetooth: hci0: unexpected cc 0x041a length: 7 > 1
+[ 3454.019062] Bluetooth: hci0: Bad flag given (0x1) vs supported (0x0)
+[ 3749.844970] Bluetooth: hci0: Bad flag given (0x1) vs supported (0x0)
+[ 3885.401925] Bluetooth: hci0: Bad flag given (0x1) vs supported (0x0)
+[ 3971.221970] set_capacity_and_notify: 28 callbacks suppressed
+[ 3971.221972] loop37: detected capacity change from 0 to 2500608
+[ 3971.269962]  loop37:
+[ 3971.342949]  loop37: p1 p2
+[ 3971.981031] EXT4-fs (loop37p2): mounted filesystem 25d2ca1c-b755-485a-a019-90204171c747 r/w with ordered data mode. Quota mode: none.
+[ 3972.302658] EXT4-fs (loop37p1): mounting ext2 file system using the ext4 subsystem
+[ 3972.303716] EXT4-fs (loop37p1): mounted filesystem c7ea2c97-6cf4-411c-b7a5-56c3537a9b48 r/w without journal. Quota mode: none.
+[ 3977.110911] EXT4-fs (loop37p1): unmounting filesystem c7ea2c97-6cf4-411c-b7a5-56c3537a9b48.
+[ 3977.351365] EXT4-fs (loop37p2): unmounting filesystem 25d2ca1c-b755-485a-a019-90204171c747.
+[ 4004.751413] usb 1-4.4: USB disconnect, device number 22
+[ 4069.714927] usb 1-4.4: new high-speed USB device number 23 using xhci_hcd
+[ 4069.816686] usb 1-4.4: New USB device found, idVendor=2717, idProduct=ff40, bcdDevice= 2.23
+[ 4069.816700] usb 1-4.4: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[ 4069.816706] usb 1-4.4: Product: Redmi 9AT
+[ 4069.816710] usb 1-4.4: Manufacturer: Xiaomi
+[ 4069.816714] usb 1-4.4: SerialNumber: <SERIALE-OSCURATO>

@@ -1,0 +1,202 @@
+         "back-file": "/var/lib/snapd/snaps/gnome-46-2404_164.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop9",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/gridplayer_22.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop36",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/thunderbird_1294.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop26",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/kf5-5-105-qt-5-15-9-core22_11.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop16",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/gnome-42-2204_263.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop7",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/core24_2124.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop34",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/snap-store_1447.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop24",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/kde-frameworks-5-91-qt-5-15-3-core20_1.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop14",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/core22_2955.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop5",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/core_17292.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop32",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/snapd_28332.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop22",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/gtk-common-themes_1535.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop12",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/gnome-46-2404_168.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop3",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/core_17284.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop30",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/mesa-core22_504.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop20",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/gnome-3-38-2004_143.snap",
+         "dio": false,
+         "log-sec": 512
+      },{
+         "name": "/dev/loop10",
+         "sizelimit": 0,
+         "offset": 0,
+         "autoclear": true,
+         "ro": true,
+         "back-file": "/var/lib/snapd/snaps/gnome-3-38-2004_140.snap",
+         "dio": false,
+         "log-sec": 512
+      }
+   ]
+}
+(207956) [17:35:38] % sudo rm /home/francesco/.local/var/pmbootstrap/chroot_native/in-pmbootstrap
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/var/cache/distfiles
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/var/cache/apk
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/sys/devices
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/sys/dev
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/sys/bus/usb/devices
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/sys
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/proc
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/mnt/rootfs_xiaomi-dandelion/var/cache/distfiles
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/mnt/rootfs_xiaomi-dandelion/var/cache/apk
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/mnt/rootfs_xiaomi-dandelion/usr/bin/qemu-aarch64-static
+(207956) [17:35:38] % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/mnt/rootfs_xiaomi-dandelion/sys/devices
+umount: /home/francesco/.local/var/pmbootstrap/chroot_native/mnt/rootfs_xiaomi-dandelion/sys/devices: not mounted.
+(207956) [17:35:38] ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(207956) [17:35:38] NOTE: The failed command's output is above the ^^^ line in the log file: /home/francesco/.local/var/pmbootstrap/log.txt
+(207956) [17:35:38] ERROR: Command failed (exit code 32): % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/mnt/rootfs_xiaomi-dandelion/sys/devices
+(207956) [17:35:38] See also: <https://postmarketos.org/troubleshooting>
+(207956) [17:35:38] Traceback (most recent call last):
+  File "/home/francesco/src/pmbootstrap/pmb/__init__.py", line 113, in main
+    run_command(args)
+  File "/home/francesco/src/pmbootstrap/pmb/commands/__init__.py", line 84, in run_command
+    build(args.packages, args.arch, args.src, args.envkernel, not args.lax)
+  File "/home/francesco/src/pmbootstrap/pmb/commands/build.py", line 24, in build
+    pmb.chroot.zap_buildroots()
+  File "/home/francesco/src/pmbootstrap/pmb/chroot/zap.py", line 48, in zap_buildroots
+    pmb.chroot.shutdown(only_build_related=True)
+  File "/home/francesco/src/pmbootstrap/pmb/chroot/shutdown.py", line 99, in shutdown
+    pmb.helpers.mount.umount_all(chroot.path)
+  File "/home/francesco/src/pmbootstrap/pmb/helpers/mount.py", line 106, in umount_all
+    pmb.helpers.run.root(["umount", mountpoint])
+  File "/home/francesco/src/pmbootstrap/pmb/helpers/run.py", line 184, in root
+    return user(cmd, working_dir, output, output_return, check, env, True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/francesco/src/pmbootstrap/pmb/helpers/run.py", line 110, in user
+    return pmb.helpers.run_core.core(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/francesco/src/pmbootstrap/pmb/helpers/run_core.py", line 502, in core
+    check_return_code(code, log_message)
+  File "/home/francesco/src/pmbootstrap/pmb/helpers/run_core.py", line 339, in check_return_code
+    raise CommandFailedError(f"Command failed (exit code {code}): " + log_message)
+pmb.helpers.exceptions.CommandFailedError: Command failed (exit code 32): % sudo umount /home/francesco/.local/var/pmbootstrap/chroot_native/mnt/rootfs_xiaomi-dandelion/sys/devices
+
+(207956) [17:35:38] % cd /home/francesco/src/pmaports; git rev-parse --abbrev-ref HEAD
+(207956) [17:35:38] % cd /home/francesco/src/pmaports; git status --porcelain
+
+
+(208017) [17:35:38] $ /home/francesco/.local/bin/pmbootstrap -p /home/francesco/src/pmaports log -n 200
+(208017) [17:35:38] pmbootstrap v3.12.1 (Python 3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0])
+(208017) [17:35:38] % tail -n 200 -F /home/francesco/.local/var/pmbootstrap/log.txt
+(208017) [17:35:38] *** output passed to pmbootstrap stdout, not to this log ***
+
+Caught KeyboardInterrupt, exiting …

@@ -1,0 +1,49 @@
+[17:42:37] (rootfs_xiaomi-dandelion) install device-xiaomi-dandelion[0m
+[17:42:38] (rootfs_xiaomi-dandelion) install postmarketos-mkinitfs[0m
+[17:42:38] (rootfs_xiaomi-dandelion) mkinitfs[0m
+[17:42:43] INFO: config-xiaomi-dandelion.aarch64 has suboptimal configuration (category:default), run 'pmbootstrap kconfig check' for details![0m
+[17:42:43] (native) boot xiaomi-dandelion kernel[0m
+[17:42:43] (native) install android-tools-avbtool android-tools-fastboot android-tools-mkbootimg[0m
+Sending 'boot.img' (20066 KB)                      OKAY [  0.511s]
+Booting                                            OKAY [  0.053s]
+Finished. Total time: 0.590s
+[17:42:45] You will get an IP automatically assigned to your USB interface shortly.[0m
+[17:42:45] Then you can connect to your device using ssh after pmOS has booted:[0m
+[17:42:45] ssh francesco@172.16.42.1[0m
+[17:42:45] [94mNOTE:[0m If you enabled full disk encryption, you should make sure that Unl0kr has been properly configured for your device[0m
+[17:42:45] [94mNOTE:[0m chroot is still active (use 'pmbootstrap shutdown' as necessary)[0m
+[17:42:45] [92mDONE![0m[0m
+flasher boot: codice di uscita 0
+[17:42:46] Unregister qemu binfmt (aarch64)[0m
+[17:42:46] [92mDONE![0m[0m
+--- esito rete USB: no
+--- lsusb
+Bus 001 Device 025: ID 2717:ff40 Xiaomi Inc. Mi/Redmi series (MTP)
+--- interfacce
+nessuna interfaccia USB
+--- dmesg del PC
+[ 4069.816710] usb 1-4.4: Manufacturer: Xiaomi
+[ 4069.816714] usb 1-4.4: SerialNumber: <SERIALE-OSCURATO>
+[ 4225.679505] usb 1-4.4: USB disconnect, device number 23
+[ 4232.531095] usb 1-4.4: new high-speed USB device number 24 using xhci_hcd
+[ 4232.631932] usb 1-4.4: New USB device found, idVendor=18d1, idProduct=d00d, bcdDevice= 1.00
+[ 4232.631947] usb 1-4.4: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[ 4232.631952] usb 1-4.4: Product: Android
+[ 4232.631956] usb 1-4.4: Manufacturer: MediaTek
+[ 4232.631960] usb 1-4.4: SerialNumber: <SERIALE-OSCURATO>
+[ 4232.675740] usb 1-4.4: usbfs: USBDEVFS_CONTROL failed cmd fwupd rqt 128 rq 8 len 1 ret -75
+[ 4647.337473] loop37: detected capacity change from 0 to 2500608
+[ 4647.389199]  loop37:
+[ 4647.462595]  loop37: p1 p2
+[ 4647.847373] EXT4-fs (loop37p2): mounted filesystem e3b4f03f-6d00-4505-bb4e-da7b7e6b9d39 r/w with ordered data mode. Quota mode: none.
+[ 4648.163351] EXT4-fs (loop37p1): mounting ext2 file system using the ext4 subsystem
+[ 4648.164198] EXT4-fs (loop37p1): mounted filesystem 054919b1-4210-4486-9f98-0cf812db016e r/w without journal. Quota mode: none.
+[ 4654.020308] EXT4-fs (loop37p1): unmounting filesystem 054919b1-4210-4486-9f98-0cf812db016e.
+[ 4654.262623] EXT4-fs (loop37p2): unmounting filesystem e3b4f03f-6d00-4505-bb4e-da7b7e6b9d39.
+[ 4672.655463] usb 1-4.4: USB disconnect, device number 24
+[ 4742.227716] usb 1-4.4: new high-speed USB device number 25 using xhci_hcd
+[ 4742.328292] usb 1-4.4: New USB device found, idVendor=2717, idProduct=ff40, bcdDevice= 2.23
+[ 4742.328306] usb 1-4.4: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[ 4742.328312] usb 1-4.4: Product: M2006C3LVG
+[ 4742.328316] usb 1-4.4: Manufacturer: Xiaomi
+[ 4742.328320] usb 1-4.4: SerialNumber: <SERIALE-OSCURATO>

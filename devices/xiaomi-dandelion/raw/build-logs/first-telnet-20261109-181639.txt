@@ -1,0 +1,91 @@
+postmarketOS debug shell
+https://postmarketos.org/debug-shell
+
+  Device: Xiaomi Redmi 9A / 9AT (xiaomi-dandelion)
+  Kernel: 4.9.190-perf
+  OS ver: edge
+  initrd: 3.12.5-r0
+
+Run 'pmos_continue_boot' to continue booting.
+Read the initramfs log with 'cat /pmOS_init.log'.
+Run 'pmos_logdump' to generate a log dump and expose it over USB.
+You can expose storage devices over USB with
+'setup_usb_storage_configfs /dev/DEVICE'
+~ # [6n
+~ # [6necho ==VER; cat /proc/version; echo ==CMD; cat /proc/cmdline; echo ==MEM; he
+ad -3 /proc/meminfo; echo ==MMC; ls /dev/mmcblk* 2>/dev/null | wc -l; ls /dev/mm
+cblk0p* 2>/dev/null | tail -3; echo ==USB; ls /sys/class/udc 2>/dev/null; echo =
+=FB; ls /dev/fb* 2>/dev/null; cat /sys/class/graphics/fb0/virtual_size 2>/dev/nu
+ll; echo ==DMESG; dmesg | wc -l; dmesg | grep -iE "kernel panic|oops|unpacking i
+nitramfs|rootfs|mmc0:|Machine model|Kernel command|lcm|ft8006" | tail -22 | cut 
+-c1-130; echo ==INITLOG; tail -24 /pmOS_init.log 2>/dev/null | cut -c1-130; echo
+ ==FINE
+==VER
+Linux version 4.9.190-perf (pmos@Intel5) (gcc version 15.2.0 (Alpine 15.2.0) ) #2-postmarketOS SMP PREEMPT Mon Nov 9 16:39:38 UTC 2026
+==CMD
+console=tty0 console=ttyS0,921600n1 vmalloc=400M slub_debug=OFZPU page_owner=on swiotlb=noforce androidboot.hardware=mt6765 maxcpus=8 loop.max_part=7 firmware_class.path=/vendor/firmware has_battery_removed=0 androidboot.boot_devices=bootdevice,11230000.mmc is_lcm_connected=1 androidboot.mode=normal  androidboot.chipid=<OSCURATO>  androidboot.cpuid=<OSCURATO> root=/dev/ram androidboot.vbmeta.device=PARTUUID=a76e4b2f-31cb-40ba-826a-c0cb0b73c856 androidboot.vbmeta.avb_version=1.1 androidboot.vbmeta.device_state=unlocked androidboot.veritymode=enforcing androidboot.veritymode.managed=yes androidboot.verifiedbootstate=orange quiet splash plymouth.ignore-serial-consoles plymouth.prefer-fbcon bootopt=64S3,32N2,64N2 buildvariant=user pmos_boot_uuid=054919b1-4210-4486-9f98-0cf812db016e pmos_root_uuid=e3b4f03f-6d00-4505-bb4e-da7b7e6b9d39 pmos_rootfsopts=defaults androidboot.opt_sim_count=2 androidboot.product.hardware.sku=dsds androidro.vendor.mtk_data_config=1 androidboot.ddrsize=2 androidboot.atm=disabled androidboot.meta_log_disable=0 printk.disable_uart=1 bootprof.pl_t=1251 bootprof.lk_t=8071 bootprof.logo_t=776 androidboot.serialno=<SERIALE-OSCURATO> androidboot.hwname=dandelion  androidboot.hwlevel=MP androidboot.hwc=VDF  androidboot.hwversion=1.49.0 androidboot.lockdown=<OSCURATO> androidboot.read_bc_buf=0x4 androidboot.secureboot=1 androidboot.mic.num=2 androidboot.product.hw.sku=pro androidboot.bootreason=lk_crash gpt=1 usb2jtag_mode=0 mrdump_ddrsv=yes mrdump_cb=0x10e800,0x1400 androidboot.dtb_idx=0 androidboot.dtbo_idx=0
+==MEM
+MemTotal:        1814508 kB
+MemFree:         1669436 kB
+MemAvailable:    1717580 kB
+==MMC
+47
+/dev/mmcblk0p7
+/dev/mmcblk0p8
+/dev/mmcblk0p9
+==USB
+[1;36mmusb-hdrc[m
+==FB
+[1;35m/dev/fb0[m
+720,1600
+==DMESG
+5012
+[  166.724144]  (4)[317:mmcqd/0]mmc0: device cq on
+[  167.914374]  (4)[319:mmcqd/0boot0]mmc0: device cq off
+[  167.934548]  (6)[317:mmcqd/0]mmc0: device cq on
+[  168.145820]  (4)[319:mmcqd/0boot0]mmc0: device cq off
+[  169.202382]  (7)[317:mmcqd/0]mmc0: device cq on
+[  169.412757]  (4)[319:mmcqd/0boot0]mmc0: device cq off
+[  169.432300]  (7)[317:mmcqd/0]mmc0: device cq on
+[  170.528368]  (4)[319:mmcqd/0boot0]mmc0: device cq off
+[  170.548858]  (7)[317:mmcqd/0]mmc0: device cq on
+[  170.759035]  (6)[319:mmcqd/0boot0]mmc0: device cq off
+[  170.778784]  (7)[317:mmcqd/0]mmc0: device cq on
+[  171.874895]  (6)[319:mmcqd/0boot0]mmc0: device cq off
+[  171.895105]  (7)[317:mmcqd/0]mmc0: device cq on
+[  172.161754]  (5)[319:mmcqd/0boot0]mmc0: device cq off
+[  173.289660]  (5)[317:mmcqd/0]mmc0: device cq on
+[  173.584275]  (6)[319:mmcqd/0boot0]mmc0: device cq off
+[  173.611678]  (5)[317:mmcqd/0]mmc0: device cq on
+[  174.785417]  (4)[319:mmcqd/0boot0]mmc0: device cq off
+[  174.812145]  (5)[317:mmcqd/0]mmc0: device cq on
+[  175.095089]  (4)[319:mmcqd/0boot0]mmc0: device cq off
+[  185.584493]  (6)[317:mmcqd/0]mmc0: device cq on
+[  186.095918]  (3)[2805:buffyboard][Power/PPM] @ppm_lcmoff_switch: onoff = 1
+==INITLOG
+mkdir: can't create directory '/sys/kernel/config/usb_gadget/g1/functions/ncm.usb0': No such file or directory
+Trying to start server with parameters: Server IP addr: 172.16.42.1:67, client IP addr: 172.16.42.2, interface: rndis0
+Setting framebuffer mode to: U:720x1600p-0
+Trying to mount subpartitions for 10 seconds...
+ERROR: failed to mount subpartitions!
+Creating logs disk
+32+0 records in
+32+0 records out
+33554432 bytes (32.0MB) copied, 0.038331 seconds, 834.8MB/s
+modprobe: FATAL: Module vfat not found in directory /lib/modules/4.9.190-perf
+./_info
+./blkid.txt
+./cmdline.txt
+./dmesg.txt
+./fdt.dtb
+./partitions.txt
+./pmOS_init.txt
+Making logs available via mass storage
+Entering debug shell
+/usr/bin/buffyboard
+modprobe: FATAL: Module uinput not found in directory /lib/modules/4.9.190-perf
+setfont: ioctl 0x4b72 failed: Invalid argument
+Ignoring invalid config file /usr/share/buffyboard/buffyboard.conf
+Ignoring invalid config file /etc/buffyboard.conf
+==FINE
+~ # [6n

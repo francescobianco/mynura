@@ -1,0 +1,4 @@
+boot/dtbs/
+boot/dtbs/mediatek/
+boot/dtbs/mediatek/mt6765.dtb
+boot/vmlinuz

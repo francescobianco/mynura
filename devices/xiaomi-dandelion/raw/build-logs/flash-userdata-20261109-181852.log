@@ -1,0 +1,23 @@
+attesa fastboot 18:18:52
+fastboot visto 18:19:45
+unlocked: yes / product: dandelion / partition-size:userdata: 5ab8fbe00
+flash userdata (1280311296 byte) 18:19:47
+Sending sparse 'userdata' 1/5 (126052 KB)          OKAY [  3.256s]
+Writing 'userdata'                                 OKAY [ 10.924s]
+Sending sparse 'userdata' 2/5 (130871 KB)          OKAY [  3.366s]
+Writing 'userdata'                                 OKAY [  2.787s]
+Sending sparse 'userdata' 3/5 (131070 KB)          OKAY [  3.369s]
+Writing 'userdata'                                 OKAY [  3.219s]
+Sending sparse 'userdata' 4/5 (131028 KB)          OKAY [  3.320s]
+Writing 'userdata'                                 OKAY [  1.847s]
+Sending sparse 'userdata' 5/5 (21936 KB)           OKAY [  0.563s]
+Writing 'userdata'                                 OKAY [  1.208s]
+Finished. Total time: 34.701s
+exit flash 0 18:20:22
+Finished. Total time: 0.251s
+riavviato 18:20:22
+18:20:24 usb:[] porte:[]
+18:20:39 usb:[18d1:d001 ] porte:[]
+18:23:44 usb:[18d1:d001 ] porte:[22 ]
+SSH APERTO 18:23:44
+fine 18:23:44

@@ -1,0 +1,85 @@
+Warning: Permanently added '172.16.42.1' (ED25519) to the list of known hosts.
+==OS
+Nura edge
+Linux xiaomi-dandelion 4.9.190-perf #2-postmarketOS SMP PREEMPT Mon Nov 9 16:39:38 UTC 2026 aarch64 Linux
+==UP
+ 18:24:03 up 3 min,  0 users,  load average: 26.83, 14.31, 5.76
+==ROOT
+/dev/loop0p2             21.5G    518.3M     19.9G   2% /
+/dev/loop0p1            454.2M     39.5M    390.4M   9% /boot
+==MEM
+              total        used        free      shared  buff/cache   available
+Mem:           1772          96        1596           1          80        1653
+==NET
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+ccmni0           DOWN           
+ccmni1           DOWN           
+ccmni2           DOWN           
+ccmni3           DOWN           
+ccmni4           DOWN           
+ccmni5           DOWN           
+ccmni6           DOWN           
+ccmni7           DOWN           
+ccmni8           DOWN           
+ccmni9           DOWN           
+ccmni10          DOWN           
+ccmni11          DOWN           
+ccmni12          DOWN           
+ccmni13          DOWN           
+ccmni14          DOWN           
+ccmni15          DOWN           
+ccmni16          DOWN           
+ccmni17          DOWN           
+ccmni18          DOWN           
+ccmni19          DOWN           
+ccmni20          DOWN           
+ccmni-lan        DOWN           
+ifb0             DOWN           
+ifb1             DOWN           
+tunl0@NONE       DOWN           
+ip_vti0@NONE     DOWN           
+ip6_vti0@NONE    DOWN           
+sit0@NONE        DOWN           
+ip6tnl0@NONE     DOWN           
+rndis0           UP             172.16.42.1/16 fe80::b882:5d
+==FAILED
+chronyd
+==TTY
+tty0 ttyS0
+==BAT
+-1
+Charging
+==WLAN
+ccmni-lan
+ccmni0
+ccmni1
+ccmni10
+ccmni11
+ccmni12
+ccmni13
+ccmni14
+ccmni15
+ccmni16
+ccmni17
+ccmni18
+ccmni19
+ccmni2
+ccmni20
+ccmni3
+ccmni4
+ccmni5
+ccmni6
+ccmni7
+ccmni8
+ccmni9
+ifb0
+ifb1
+ip6_vti0
+ip6tnl0
+ip_vti0
+lo
+rndis0
+sit0
+tunl0
+==DMESG
+4722

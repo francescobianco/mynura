@@ -1,0 +1,94 @@
+# Reference: <https://postmarketos.org/vendorkernel>
+# Kernel config based on: arch/arm64/configs/(CHANGEME!)
+
+pkgname=linux-xiaomi-dandelion
+pkgver=4.9.190
+pkgrel=1
+pkgdesc="Xiaomi Redmi 9A kernel fork"
+arch="aarch64"
+_carch="arm64"
+_flavor="xiaomi-dandelion"
+url="https://kernel.org"
+license="GPL-2.0-only"
+options="!strip !check !tracedeps pmb:cross-native"
+makedepends="
+	bash
+	bc
+	bison
+	devicepkg-dev
+	findutils
+	flex
+	openssl-dev
+	perl
+	python3
+"
+
+# Source
+_repository="linux-xiaomi-dandelion"
+_commit="8974b9164af90d94603900b229264ae879a83a83"
+_config="config-$_flavor.$arch"
+source="
+	$pkgname-$_commit.tar.gz::https://github.com/SheatNoisette/$_repository/archive/$_commit.tar.gz
+	$_config
+	0001-drvgen-Upgrade-to-Python3.patch
+	0002-drvgen-Upgrade-components-to-Python-3.patch
+	0003-drvgen-Add-cmp-function.patch
+	0004-drvgen-Remplace-string.atoi-to-int-fnc.patch
+	0005-drvgen-Rename-list-variables-for-py3.patch
+	0006-drvgen-Remove-duplicate-of-DT_EXT_MD_EXP.patch
+	0007-drvgen-Fix-YuSu.cmp-duplicates.patch
+	0008-ft8006s_spi-Add-dummy-firmware.patch
+	linux4.2-gcc10-extern_YYLOC_global_declaration.patch
+"
+builddir="$srcdir/$_repository-$_commit"
+_outdir="out"
+
+prepare() {
+	default_prepare
+	# Limiti di ricarica al freddo (JEITA) come nel firmware stock V12.0.5:
+	# il sorgente pubblicato è meno prudente.
+	sed -i \
+		-e 's/jeita_current_t1_to_t2 = <1500000>/jeita_current_t1_to_t2 = <1380000>/' \
+		-e 's/jeita_current_t0_to_t1 = <540000>/jeita_current_t0_to_t1 = <430000>/' \
+		-e 's/temp_t2_thres = <15>/temp_t2_thres = <17>/' \
+		-e 's/temp_t2_thres_plus_x_degree = <16>/temp_t2_thres_plus_x_degree = <18>/' \
+		arch/arm64/boot/dts/mediatek/mt6765.dts
+	. downstreamkernel_prepare
+}
+
+build() {
+	unset LDFLAGS
+	make O="$_outdir" ARCH="$_carch" CC="${CC:-gcc}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-postmarketOS"
+}
+
+package() {
+	downstreamkernel_package "$builddir" "$pkgdir" "$_carch" \
+		"$_flavor" "$_outdir"
+
+	# Nello stock la sezione dtb dell'header v2 è una tabella Android DT
+	# (magic 0xd7b7ab1e) con un solo dtb: la riproduciamo identica.
+	install -d "$pkgdir/boot/dtbs/mediatek"
+	python3 -c '
+import struct, sys
+d = open(sys.argv[1], "rb").read()
+h = struct.pack(">8I", 0xd7b7ab1e, 64 + len(d), 32, 32, 1, 32, 2048, 0)
+e = struct.pack(">8I", len(d), 64, 0, 0, 0, 0, 0, 0)
+open(sys.argv[2], "wb").write(h + e + d)
+' "$builddir/$_outdir/arch/$_carch/boot/dts/mediatek/mt6765.dtb" \
+		"$pkgdir/boot/dtbs/mediatek/mt6765.dtb"
+}
+
+sha512sums="
+d1180f0be8111fba40030b5cae104d5ba60cd49408276bdb9bce3594e8cae5151fa6e90861068d6abbe0b6392514a99f0ac578aff8bdf69d02445e278b663f43  linux-xiaomi-dandelion-8974b9164af90d94603900b229264ae879a83a83.tar.gz
+77fb6875afbe7fc9b6301ca38a579c79ad45ab58407ff4baac3920e1d23e82a082c09bba81f5e80c5f437a2855652d9b964d97155449bf5939dc77891d351d3e  config-xiaomi-dandelion.aarch64
+5fe1a118f7435dc09158967e0e7a865b1b3f4c6b468852f07ff54114d45468146509d409146311f984cf41e0cdf0c36b27f501d9c8ef81bfbc6ffc1af2d092b6  0001-drvgen-Upgrade-to-Python3.patch
+173b55b0a0ca643d884c131b42d9bf643994c427d8899c8765a0bd69210ab43dcf47d778f432e4d066e9fb5fce68ec30555fe963e81af639c8ff296c21f933f3  0002-drvgen-Upgrade-components-to-Python-3.patch
+12a512f5d994a71a6dff67ad50976e4f882b3c6bf793cdfb4f861f282484509e2d49d54b0fab4fa47ceaf5fccb3f57b1571cdc5c2e889732955882190e3915c2  0003-drvgen-Add-cmp-function.patch
+a81894e2867b7dab00fce146cd929d6bed4df959eb943f1b98b004b2ac3b83d8d276e889ccacc34d619925cf617eb44b1988b080b7d12ad7639b583517dab804  0004-drvgen-Remplace-string.atoi-to-int-fnc.patch
+3618195f2da482a4224b40e1176ab13d748013bff3dc618b215047218362c58b89b80d86a6cfe8da9bf1c8fa4797599b8508d9b93a4d10b73b800c3fc92740e8  0005-drvgen-Rename-list-variables-for-py3.patch
+bfa653127d610282d5ab93da0618404b899f1387c0e60452d3dc44c12bb40fdd5f369d554fa46819f6a22141c110da96c588e1fe296ce818d6c546ba29aa5ce8  0006-drvgen-Remove-duplicate-of-DT_EXT_MD_EXP.patch
+e47af5085d1f1a55c11666d289c227d45acea72543dc5c922447c17cb4d0a1e575def808c87f1c7cf0a42fac584cd6231e032bbb785cd07e49d30b32e4940ea8  0007-drvgen-Fix-YuSu.cmp-duplicates.patch
+f25ef88110a29391abd4e143386befed10661884a5bf2dfe0ca4bde121caf09b5a0b2a7fd5f754a3af5f97036259efacab3435f0f05b5ad9cba1bcde68621c66  0008-ft8006s_spi-Add-dummy-firmware.patch
+eaf2e61fcb508cdd239b8fed209d2a09ecac77287f6b46d003918fdf1c6fa2ee63f7390f3ff7c49029b8ed6cbcdd81c7e9a4b1ece9f5060b6fc84e322bd47f41  linux4.2-gcc10-extern_YYLOC_global_declaration.patch
+"

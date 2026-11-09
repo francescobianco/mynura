@@ -1,0 +1,33 @@
+[17:11:44] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:11:44] Update package index for aarch64 (4 file(s))[0m
+[17:11:46] Building [94m1[0m package[0m
+[17:11:46]    [94m*[0m edge/linux-xiaomi-dandelion[0m
+[17:11:46] [93m=> (1/1)[0m [94medge/linux-xiaomi-dandelion[0m: Installing dependencies[0m
+[17:11:46] Initializing x86_64 buildroot[0m
+[17:11:46] (native) Creating chroot[0m
+[17:11:47] (native) install abuild apk-tools build-base ccache git pigz[0m
+[17:11:49] (native) generate abuild keys[0m
+[17:11:49] (native) install ccache-cross-symlinks abuild gcc-aarch64 g++-aarch64[0m
+[17:11:53] (native) install perl bash openssl-dev devicepkg-dev bc flex bison python3 findutils[0m
+[17:11:55] [93m=>[0m [94medge/linux-xiaomi-dandelion[0m: Building package (cross compiling: cross-native)[0m
+[17:18:11] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:18:12] [93m=>[0m [94medge/linux-xiaomi-dandelion[0m: Done![0m
+[17:18:12] [93m=>[0m [92mFinished building packages[0m
+[17:18:12] [92mDONE![0m[0m
+[17:18:12] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:18:13] Building [94m1[0m package[0m
+[17:18:13]    [94m*[0m edge/device-xiaomi-dandelion[0m
+[17:18:13] [93m=> (1/1)[0m [94medge/device-xiaomi-dandelion[0m: Installing dependencies[0m
+[17:18:13] Initializing aarch64 buildroot[0m
+[17:18:14] (native) Creating chroot[0m
+[17:18:15] (native) install qemu-aarch64[0m
+[17:18:15] Register qemu binfmt (aarch64)[0m
+[17:18:16] (buildroot_aarch64) Creating chroot[0m
+[17:18:19] (buildroot_aarch64) install abuild apk-tools build-base ccache git pigz[0m
+[17:18:23] (native) install ccache-cross-symlinks abuild gcc-aarch64 g++-aarch64 crossdirect[0m
+[17:18:25] (buildroot_aarch64) install devicepkg-dev[0m
+[17:18:26] [93m=>[0m [94medge/device-xiaomi-dandelion[0m: Building package (cross compiling: crossdirect)[0m
+[17:18:31] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[17:18:31] [93m=>[0m [94medge/device-xiaomi-dandelion[0m: Done![0m
+[17:18:31] [93m=>[0m [92mFinished building packages[0m
+[17:18:31] [92mDONE![0m[0m
