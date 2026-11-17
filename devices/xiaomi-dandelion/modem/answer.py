@@ -32,7 +32,11 @@ AUDIO_FIFO = '/tmp/mtkaudio.cmd'
 # come background sound), 6 s di registrazione della voce di chi chiama (ingresso 80000040, la rete, sorgente 3 =
 # downlink) e la registrazione rimandata dentro la chiamata.
 T = '/data/local/tmp'
-VOICE_ON = ['open 2 2 48000', 'mode 2', 'mixpatch 2', 'vol 1.0', 'sleep 1', 'mopen 16000 1']
+# In modalità convo tutto si prepara allo squillo, prima di ATA: chi chiama sente il saluto appena risponde.
+# 'mute 1' spegne il microfono del telefono (in vivavoce, senza filtri, dava un forte fruscio a chi chiama);
+# da verificare che la voce di Piper passi ancora: lo stream incall music dovrebbe mescolarsi dopo il microfono.
+VOICE_ON = ['open 2 2 48000', 'mode 2', 'mixpatch 2', 'vol 1.0', 'mute 1', 'mopen 16000 1']
+RING_SETUP = VOICE_ON + ['iopen 80000040 3 16000 1', 'echo pronto']
 AUDIO_ON = VOICE_ON + [f'mplay {T}/ascolto.raw', 'iopen 80000040 3 16000 1', f'rec {T}/rec.raw 6', 'iclose',
                        f'mplay {T}/ecco.raw', f'mplay {T}/rec.raw']
 AUDIO_OFF = ['iclose', 'mclose', 'unpatchall', 'mode 0', 'close']
@@ -69,12 +73,32 @@ def send(cmd):
 
 
 # Stato della chiamata: id della chiamata in arrivo, quando è stata risposta
-state = {'incoming': None, 'answered_at': None, 'ata_sent': False, 'seen_at': None}
+state = {'incoming': None, 'answered_at': None, 'ata_sent': False, 'seen_at': None, 'log_pos': 0}
+
+
+def audio_ready(timeout=5):
+    """Aspetta che mtkaudio abbia eseguito RING_SETUP (riga 'echo: pronto' nel suo log)."""
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            with open('/tmp/mtkaudio.log', errors='replace') as f:
+                f.seek(state['log_pos'])
+                if 'echo: pronto' in f.read():
+                    return True
+        except OSError:
+            pass
+        time.sleep(0.05)
+    return False
 
 
 def answer():
     if not state['ata_sent']:
         state['ata_sent'] = True
+        if MODE != 'eco':
+            t = time.time()
+            state['log_pos'] = os.path.getsize('/tmp/mtkaudio.log')
+            audio(RING_SETUP)
+            log(f'audio pronto: {audio_ready()} in {time.time() - t:.2f} s')
         send('ATA')
 
 
@@ -103,7 +127,6 @@ def handle(line):
             if MODE == 'eco':
                 audio(AUDIO_ON)
             else:
-                audio(VOICE_ON)
                 convo_ctl(f'start {int(time.time())}')
         elif msg == 133:
             log('*** chiamata chiusa')

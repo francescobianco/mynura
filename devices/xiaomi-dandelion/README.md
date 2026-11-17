@@ -141,6 +141,26 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-17 — 💬 Conversazione con Claude in chiamata (Claude per @francesco)
+
+- **Prima conversazione vera**: @francesco chiama, il telefono risponde, Vosk trascrive sul telefono, il PC
+  (`modem/brain-pc.py`, `claude -p`) risponde, Piper parla. Due domande e due risposte sensate. Tempi: trascrizione
+  1,5-5 s, Claude 3,6-6 s, **Piper 14-17 s**, perché ricaricava il modello a ogni frase (12 s di caricamento, 1 s di sintesi).
+- Riconoscimento: Vosk `vosk-model-small-it-0.22` (`py3-vosk-api` di Alpine) circa 4 s per 6 s di audio;
+  whisper.cpp 1.7.6 compilato sul telefono (il pacchetto Alpine `whisper.cpp` 1.9.5 cerca `libggml.so.0`, che
+  non c'è) dà lo stesso testo ma in 15 s (base q5_1) o 33 s (small q5_1). Si usa Vosk.
+- Commenti di @francesco: forte **fruscio** nei silenzi; tutto deve essere **pronto all'apertura** della
+  chiamata, senza caricamenti; risposte **quasi istantanee**. Interventi:
+  - `convo.py` è un servizio sempre acceso: Piper, Vosk e le frasi fisse si caricano all'avvio;
+  - allo squillo `answer.py` prepara voce del modem e stream (`echo pronto` di mtkaudio come segnale) e solo
+    dopo manda `ATA`; il saluto è già sintetizzato;
+  - `mute 1` (microfono del telefono spento) contro il fruscio: da verificare che Piper passi ancora;
+  - Vosk trascrive mentre si parla (recvad scrive frame per frame, `convo.py` legge il file che cresce); pausa di
+    fine frase 700 ms;
+  - `brain-pc.py` tiene una sessione `claude -p` sempre accesa (stream-json in ingresso e in uscita, una pronta
+    in anticipo per la chiamata successiva): risposta completa in circa 1,6 s dal telefono, prima frase per prima;
+  - il telefono sintetizza e suona la risposta frase per frase, mentre Claude scrive il resto.
+
 ### 2026-11-17 — 🎉🗣️ La voce di Piper dentro una chiamata vera (Claude per @francesco)
 
 - @francesco chiama la SIM del telefono (che è in ufficio, lui da casa). `modem/answer.py` risponde e manda a

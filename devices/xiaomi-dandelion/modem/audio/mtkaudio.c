@@ -30,6 +30,7 @@
  *   unpatch <handle>    release_audio_patch
  *   unpatchall          rilascia tutte le patch create
  *   sleep <s>
+ *   echo <testo>        stampa "echo: <testo>": segnala che i comandi precedenti sono finiti
  *   quit
  * Costruzione: vedi build.sh
  */
@@ -427,6 +428,8 @@ int main(int argc, char **argv, char **envp)
 			if (in) dev->close_input_stream(dev, in);
 			in = 0;
 			printf("chiuso\n");
+		} else if (!strncmp(line, "echo ", 5)) {
+			printf("echo: %s\n", a);
 		} else if (!strncmp(line, "sleep ", 6)) {
 			usleep((unsigned)(strtod(a, 0) * 1e6));
 			printf("ok\n");
