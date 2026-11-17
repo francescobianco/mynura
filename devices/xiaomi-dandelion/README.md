@@ -132,12 +132,25 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 - [ ] Provare l'avvio scrivendo l'immagine nella partizione `boot`
 - [x] Decidere come fornire il dtb: entrambi i modi, come nello stock
 - [x] Chiamate vocali in uscita e in arrivo (risposta automatica `modem/answer.py`); mai riagganciare durante il passaggio al 3G (diario 2026-11-17)
-- [ ] Audio delle chiamate (microfono/altoparlante o voce di Piper): passa dal DSP del modem, serve l'audio MediaTek
+- [x] Voce di Piper dentro la chiamata (stream incall music, `modem/audio/mtkaudio`) — diario 2026-11-17
+- [ ] Ascoltare chi chiama (stream di ingresso della chiamata) per la conversazione con Claude
 - [ ] Porta AT `ttyC0` piena quando nessuno la legge: serve un demone sempre in ascolto (RIL o oFono)
 
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-17 — 🎉🗣️ La voce di Piper dentro una chiamata vera (Claude per @francesco)
+
+- @francesco chiama la SIM del telefono (che è in ufficio, lui da casa). `modem/answer.py` risponde e manda a
+  `mtkaudio` questa sequenza: `open 2 2 48000`, `mode 2`, `mixpatch 2` (voce del modem accesa),
+  `mopen 16000 1` (stream **incall music**: flag e dispositivo `0x10000`) e `mplay` di una frase generata con
+  Piper (`it_IT-paola-medium`, convertita con `ffmpeg -ar 16000 -ac 1 -f s16le`). **@francesco sente la frase**:
+  «Ciao Francesco, sono Claude…».
+- MediaTek manda lo stream incall music al modem come «background sound» tramite `ccci_aud`. A 16 kHz mono lo
+  stream ha latenza 512 ms e buffer 2048 byte; a 48 kHz stereo latenza 85 ms, come il mixer normale.
+- Il prossimo passo è la conversazione: catturare la voce di chi chiama (stream di ingresso della chiamata),
+  trascriverla, far rispondere Claude e generare la risposta con Piper durante la chiamata.
 
 ### 2026-11-17 — 🔈 HAL audio MediaTek comandato da Nura: si apre la voce del modem (Claude per @francesco)
 
