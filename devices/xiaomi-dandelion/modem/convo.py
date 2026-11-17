@@ -11,13 +11,16 @@ Ascolto continuo e interruzioni:
   - se chi chiama parla **mentre Piper parla** per almeno BARGE_MS, Piper si ferma (mstop), il resto della
     risposta si scarta e il ponte viene avvisato; la frase nuova arriva a Claude insieme a quello che Piper aveva
     fatto in tempo a dire, così la conversazione cambia strada;
-  - un secondo thread trascrive con Vosk mentre si parla: a fine frase il testo è già pronto.
+  - la trascrizione avviene **sul PC** (brain-pc.py, Vosk con il modello italiano grande): l'audio di ogni frase
+    va in /tmp/stt.q a pezzi da 200 ms mentre si parla, il testo torna in /tmp/brain.a appena la frase si chiude.
+    Se il PC non risponde entro STT_WAIT secondi si trascrive qui con il modello piccolo (con STT=local sempre qui).
 La risposta arriva da brain-pc.py una frase alla volta: si sintetizza e si mette in coda subito (la coda di
 mtkaudio suona senza pause), e alla fine si suona il segnale "tocca a te" (assets/fine.raw, kalimba come
 l'attacco del progetto speaker). Le azioni ([[riaggancia]], ...) si eseguono al loro posto.
 
 Uso: sudo python3 convo.py
 """
+import base64
 import json
 import os
 import queue
@@ -35,6 +38,9 @@ VOSK_MODEL = f'{HOME}/stt/vosk-model-small-it-0.22'
 CT = '/var/lib/miui-ct/data/local/tmp'  # la stessa cartella vista da mtkaudio come /data/local/tmp
 LOG, CMD, CTL = '/tmp/mtkaudio.log', '/tmp/mtkaudio.cmd', '/tmp/convo.cmd'
 Q, A = '/tmp/brain.q', '/tmp/brain.a'
+STT_Q = '/tmp/stt.q'   # audio delle frasi verso il PC
+STT_WAIT = 3.0         # secondi di attesa del testo dal PC, poi trascrizione locale
+STT_LOCAL = os.environ.get('STT') == 'local'
 AT_FIFO = '/tmp/answer.cmd'  # comandi AT, inviati da answer.py che tiene aperta la porta del modem
 CAPTURE = 'cattura.raw'
 GREETING = 'Ciao, sono Piper. Dimmi pure.'
@@ -145,22 +151,67 @@ def listener():
     f.close()
 
 
-def transcriber(frames):
-    """Una frase: Vosk mentre arriva l'audio, il testo finale in `utterances` appena la frase si chiude."""
-    rec = vosk.KaldiRecognizer(vosk_model, 16000)
-    chunk, total = b'', 0
+def stt_send(obj):
+    with open(STT_Q, 'a') as f:
+        f.write(json.dumps(obj) + '\n')
+
+
+def stt_wait(uid, pos, timeout):
+    """Aspetta il testo della frase uid dal PC in /tmp/brain.a (None se non arriva)."""
+    end = time.time() + timeout
+    while time.time() < end:
+        with open(A, 'rb') as f:
+            f.seek(pos)
+            data = f.read()
+        for line in data.decode(errors='replace').splitlines():
+            if '"stt"' in line:
+                try:
+                    a = json.loads(line)
+                except ValueError:
+                    continue
+                if a.get('stt') == uid:
+                    return a.get('text', '')
+        time.sleep(0.02)
+    return None
+
+
+def transcriber(frames, n=[0]):
+    """Una frase: l'audio va al PC mentre arriva (o a Vosk qui), il testo finale va in `utterances`."""
+    n[0] += 1
+    uid = f'{call["id"]}-u{n[0]}'
+    remote = not STT_LOCAL
+    pos = os.path.getsize(A)
+    if remote:
+        stt_send({'t': 'b', 'u': uid})
+    audio, chunk = [], b''
     while (fr := frames.get()) is not None:
+        audio.append(fr)
         chunk += fr
-        total += len(fr)
-        if len(chunk) >= FRAME * 10:  # Vosk lavora meglio a blocchi da 200 ms
-            rec.AcceptWaveform(chunk)
+        if len(chunk) >= FRAME * 10:  # blocchi da 200 ms
+            if remote:
+                stt_send({'t': 'a', 'u': uid, 'd': base64.b64encode(chunk).decode()})
             chunk = b''
     t = time.time()
-    if chunk:
-        rec.AcceptWaveform(chunk)
-    text = json.loads(rec.FinalResult())['text']
-    if total >= 16000 and text.strip():  # almeno mezzo secondo di audio (16 bit)
-        log(f'trascrizione pronta {time.time() - t:.2f} s dopo la pausa: {text}')
+    total = sum(map(len, audio))
+    if total < 16000:  # meno di mezzo secondo di audio (16 bit)
+        if remote:
+            stt_send({'t': 'e', 'u': uid, 'skip': True})
+        return
+    text, where = None, 'PC'
+    if remote:
+        if chunk:
+            stt_send({'t': 'a', 'u': uid, 'd': base64.b64encode(chunk).decode()})
+        stt_send({'t': 'e', 'u': uid})
+        text = stt_wait(uid, pos, STT_WAIT)
+    if text is None:  # PC lento o spento: modello piccolo qui
+        where = 'telefono'
+        rec = vosk.KaldiRecognizer(vosk_model, 16000)
+        data = b''.join(audio)
+        for i in range(0, len(data), FRAME * 10):
+            rec.AcceptWaveform(data[i:i + FRAME * 10])
+        text = json.loads(rec.FinalResult())['text']
+    if text.strip():
+        log(f'trascrizione ({where}) pronta {time.time() - t:.2f} s dopo la pausa: {text}')
         utterances.put(text)
 
 
@@ -321,6 +372,8 @@ def cancel(qid):
 def conversation():
     while not utterances.empty():
         utterances.get()
+    open(STT_Q, 'w').close()  # coda audio verso il PC: si riparte da zero
+    os.chmod(STT_Q, 0o666)
     try:
         os.unlink(f'{CT}/{CAPTURE}')  # niente audio della chiamata precedente
     except FileNotFoundError:

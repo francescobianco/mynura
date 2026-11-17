@@ -141,6 +141,28 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-17 — 🎙️ Trascrizione sul PC con il modello grande, il piccolo resta di riserva (Claude per @francesco)
+
+- Il telefono continua a decidere da solo quando chi chiama parla (e a interrompere Piper), ma l'audio di ogni frase
+  va al PC in `/tmp/stt.q` mentre si parla (righe JSON: inizio, pezzi da 200 ms in base64, fine). `brain-pc.py`
+  lo trascrive con Vosk e `vosk-model-it-0.22` (2 GB, in `~/nura-voice/models/`, Vosk in un venv
+  `~/nura-voice/venv`, senza sudo) e rimanda il testo in `/tmp/brain.a` come `{"stt", "text"}`.
+- Prova: dalla fine della frase al testo sul telefono 0,5 s, trascrizione 0,15 s. Il modello grande capisce
+  anche dove il piccolo sbagliava.
+- Riserva: se il PC non risponde entro 3 s il telefono trascrive con `vosk-model-small-it-0.22`; con `STT=local`
+  sempre sul telefono. Il log dice chi ha trascritto.
+- Il ponte va avviato con il Python del venv: `~/nura-voice/venv/bin/python brain-pc.py`.
+
+### Prossimi passi annotati (richiesta di @francesco, 2026-11-17)
+
+- **Internet sul telefono**: verificare sia il Wi-Fi locale sia la connessione dati della SIM. Da fare più avanti:
+  il credito è poco e non va consumato adesso.
+- **VPS di emergenza**: se la connessione fisica con il PC cade, il telefono deve poter avviare una sessione di
+  Claude Code su una VPS preparata, raggiungibile via SSH, anche per necessità in tempo reale. Idea: il telefono
+  apre lui la connessione verso la VPS (tunnel SSH inverso, così la VPS raggiunge il telefono come oggi il PC) e
+  sulla VPS gira lo stesso `brain-pc.py`; `convo.py` passa alla VPS se il PC non risponde. Serve internet sul
+  telefono (punto sopra) e i dati della VPS.
+
 ### 2026-11-17 — ✋ Interruzioni: chi chiama può parlare sopra Piper, e un suono dice «tocca a te» (Claude per @francesco)
 
 - Richiesta di @francesco: gestire la concorrenza della conversazione. Se chi chiama parla mentre Piper parla,

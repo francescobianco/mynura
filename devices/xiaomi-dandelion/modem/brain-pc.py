@@ -17,7 +17,13 @@ La parola d'ordine non viene mai passata a Claude né scritta nel log: al suo po
 Configurazione locale, fuori dal repository: ~/.config/nura-voice/config.json (permessi 600)
   {"passphrase": "...", "callers": ["+39..."], "workdir": "~/nura-voice"}
 
-Uso sul PC: python3 brain-pc.py [utente@172.16.42.1] [modello_chiacchiera] [modello_operativo]
+Trascrizione: il telefono manda l'audio di ogni frase in /tmp/stt.q (righe JSON: inizio, pezzi da 200 ms in
+base64, fine); qui Vosk con il modello italiano grande lo trascrive mentre arriva e il testo torna al telefono in
+/tmp/brain.a come {"stt", "text"}. Serve Vosk nel Python che esegue il ponte (python -m venv ~/nura-voice/venv;
+~/nura-voice/venv/bin/pip install vosk) e il modello in ~/nura-voice/models/vosk-model-it-0.22 (o "stt_model" nella
+configurazione). Senza, il telefono trascrive da solo con il modello piccolo.
+
+Uso sul PC: ~/nura-voice/venv/bin/python brain-pc.py [utente@172.16.42.1] [modello_chiacchiera] [modello_operativo]
 """
 import difflib
 import json
@@ -311,10 +317,53 @@ def sync_pronuncia():
         time.sleep(1)
 
 
+STT_MODEL = os.path.expanduser(CONF.get('stt_model', '~/nura-voice/models/vosk-model-it-0.22'))
+
+
+def stt_service(phone):
+    """Trascrive l'audio delle frasi che il telefono manda in /tmp/stt.q e rimanda il testo."""
+    try:
+        import vosk
+    except ImportError:
+        log('trascrizione sul PC non disponibile: manca vosk (il telefono trascrive da solo)')
+        return
+    if not os.path.isdir(STT_MODEL):
+        log(f'trascrizione sul PC non disponibile: manca il modello {STT_MODEL}')
+        return
+    import base64
+    vosk.SetLogLevel(-1)
+    t = time.time()
+    model = vosk.Model(STT_MODEL)
+    log(f'trascrizione sul PC pronta ({os.path.basename(STT_MODEL)}, caricato in {time.time() - t:.1f} s)')
+    p = subprocess.Popen(SSH + ['touch /tmp/stt.q; tail -n0 -F /tmp/stt.q 2>/dev/null'],
+                         stdout=subprocess.PIPE, text=True)
+    recs = {}
+    for line in p.stdout:
+        try:
+            m = json.loads(line)
+        except ValueError:
+            continue
+        uid = m.get('u')
+        if m.get('t') == 'b':
+            recs[uid] = vosk.KaldiRecognizer(model, 16000)
+        elif m.get('t') == 'a' and uid in recs:
+            recs[uid].AcceptWaveform(base64.b64decode(m['d']))
+        elif m.get('t') == 'e' and uid in recs:
+            rec = recs.pop(uid)
+            if m.get('skip'):
+                continue
+            t = time.time()
+            text = json.loads(rec.FinalResult())['text']
+            phone.send({'stt': uid, 'text': text})
+            shown = find_passphrase(text)[1]  # la parola d'ordine non va nel log
+            log(f'   trascritto in {time.time() - t:.2f} s: {shown}')
+
+
 def main():
     threading.Thread(target=sync_pronuncia, daemon=True).start()
     log(f'ponte verso {PHONE}, chiacchiera {CHAT_MODEL}, operativo {OPS_MODEL}, cartella {WORKDIR}')
     phone = Phone()
+    threading.Thread(target=stt_service, args=(phone,), daemon=True).start()
     ready = Session()  # sessione già avviata per la prossima chiamata
     calls = {}
     p = subprocess.Popen(SSH + ['touch /tmp/brain.q /tmp/brain.a; tail -n0 -F /tmp/brain.q'],
