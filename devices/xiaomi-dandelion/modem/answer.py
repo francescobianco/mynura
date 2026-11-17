@@ -2,12 +2,30 @@
 # Tiene /dev/ttyC0 sempre aperta e letta: senza un lettore gli avvisi del modem restano in coda.
 # Approva la chiamata (+EAIC), risponde con ATA, resta in linea N secondi e riaggancia.
 # Mentre gira, comandi AT a mano: echo 'AT+CSQ' > /tmp/answer.cmd (le risposte vanno nel log).
+# Se gira mtkaudio (modem/audio), a chiamata connessa accende l'audio di chiamata e a fine chiamata lo spegne,
+# scrivendo i comandi in /tmp/mtkaudio.cmd.
 # Uso: sudo python3 answer.py [/dev/ttyC0] [secondi_in_linea]
 import os, sys, time, tty, termios, select, re
 
 dev = sys.argv[1] if len(sys.argv) > 1 else '/dev/ttyC0'
 hold = float(sys.argv[2]) if len(sys.argv) > 2 else 8
 FIFO = '/tmp/answer.cmd'
+AUDIO_FIFO = '/tmp/mtkaudio.cmd'
+# Altoparlante (0x2), stream primario (0x2), poi modalità "in chiamata" (2)
+AUDIO_ON = ['open 2 2 48000', 'oparam routing=2', 'mode 2', 'vol 1.0']
+AUDIO_OFF = ['mode 0', 'close']
+
+
+def audio(cmds):
+    if not os.path.exists(AUDIO_FIFO):
+        return
+    try:
+        afd = os.open(AUDIO_FIFO, os.O_WRONLY | os.O_NONBLOCK)
+        os.write(afd, ('\n'.join(cmds) + '\n').encode())
+        os.close(afd)
+        log(f'audio: {"; ".join(cmds)}')
+    except OSError as e:
+        log(f'audio: {e}')
 
 fd = os.open(dev, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
 try:
@@ -60,8 +78,11 @@ def handle(line):
         elif msg == 6 and state['ata_sent'] and state['answered_at'] is None:
             state['answered_at'] = time.time()
             log(f'*** connessa: resto in linea {hold:g} s')
+            audio(AUDIO_ON)
         elif msg == 133:
             log('*** chiamata chiusa')
+            if state['ata_sent']:
+                audio(AUDIO_OFF)
             reset()
         return
     if line.startswith('+CRING') or line == 'RING':
@@ -69,7 +90,8 @@ def handle(line):
 
 
 buf = b''
-for c in ('AT', 'AT+CMEE=2', 'AT+ECPI=4294967295', 'AT+CRC=1', 'AT+CLIP=1', 'AT+EAIC?'):
+# CNMI=2,1: gli SMS restano sulla SIM e arriva solo +CMTI, senza conferma da mandare (AT+CNMA dà ERROR)
+for c in ('AT', 'AT+CMEE=2', 'AT+ECPI=4294967295', 'AT+CRC=1', 'AT+CLIP=1', 'AT+CNMI=2,1,0,0,0', 'AT+EAIC?'):
     send(c)
     time.sleep(0.3)
 log(f'in ascolto su {dev}')

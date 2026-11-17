@@ -5,6 +5,8 @@ B=/var/lib/miui-ct; R=$B/root
 mount -t tmpfs -o mode=755 tmpfs $R/dev
 cd /dev
 cp -a null zero full random urandom kmsg tty ptmx binder hwbinder vndbinder ashmem ion ccci_* ttyC* $R/dev/
+# Audio: ALSA e i nodi MediaTek usati dall'HAL (audio_ipi, accdet, scp)
+cp -a snd $R/dev/; for n in audio_ipi accdet scp scp_vcore_req; do [ -e $n ] && cp -a $n $R/dev/; done
 mkdir -p $R/dev/pts $R/dev/block/platform/bootdevice/by-name
 mount -t devpts -o newinstance,ptmxmode=0666 devpts $R/dev/pts
 for p in md1img md1dsp md1arm7 boot_para proinfo; do
@@ -26,6 +28,7 @@ for d in system/etc/init vendor/etc/init product/etc/init; do [ -d $R/$d ] &&  m
 mkdir -p $R/odm $R/mnt/vendor
 chown 1001:1001 $R/dev/ccci* $R/dev/ttyC*; chmod 0660 $R/dev/ccci* $R/dev/ttyC*
 for n in ccci_aud ccci_raw_audio; do [ -e $R/dev/$n ] && chown 1041:1041 $R/dev/$n; done
+chown -R 1000:1005 $R/dev/snd; chmod 0660 $R/dev/snd/*; chown 1000:1005 $R/dev/audio_ipi 2>/dev/null || true
 chmod 0666 $R/dev/binder $R/dev/hwbinder $R/dev/vndbinder $R/dev/ashmem; chown 1000:1003 $R/dev/ion; chmod 0664 $R/dev/ion
 chown 0:1000 $R/dev/block/*; chmod 0660 $R/dev/block/* 2>/dev/null || true
 mkdir -p $R/dev/socket $R/debug_ramdisk
