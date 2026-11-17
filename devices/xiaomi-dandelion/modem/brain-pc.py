@@ -60,6 +60,8 @@ UNLOCKED = VOICE + (
     'distruttive, irreversibili o che cambiano configurazioni chiedi conferma a voce.'
 )
 # Istruzioni rilette a ogni richiesta: con --resume la sessione operativa deve avere le sue, non quelle bloccate
+# Scheda operativa (come raggiungere il telefono, comandi AT, regole), letta all'avvio di ogni sessione operativa
+OPS_NOTES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'voice-ops.md')
 BASE = ['claude', '-p', '--strict-mcp-config', '--setting-sources', '', '--system-prompt-snapshot', 'off',
         '--input-format', 'stream-json',
         '--output-format', 'stream-json', '--include-partial-messages', '--verbose']
@@ -96,8 +98,9 @@ class Session:
         self.unlocked = unlocked
         self.sid = sid or str(uuid.uuid4())
         if unlocked:
+            notes = open(OPS_NOTES).read() if os.path.exists(OPS_NOTES) else ''
             cmd = BASE + ['--model', OPS_MODEL, '--resume', self.sid, '--permission-mode', 'auto',
-                          '--append-system-prompt', UNLOCKED]
+                          '--append-system-prompt', UNLOCKED + '\n\n' + notes]
         else:
             cmd = BASE + ['--model', CHAT_MODEL, '--session-id', self.sid, '--tools', '', '--system-prompt', LOCKED]
         self.p = subprocess.Popen(cmd, cwd=WORKDIR, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
