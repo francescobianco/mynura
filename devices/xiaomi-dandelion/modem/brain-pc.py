@@ -40,20 +40,33 @@ SSH = ['ssh', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=no', '-o', 'Us
        '-o', 'LogLevel=ERROR', '-o', 'ServerAliveInterval=10', PHONE]
 
 VOICE = (
-    'Stai parlando al telefono, in una chiamata vera: chi chiama sente la tua voce sintetizzata con Piper da un '
+    'Ti chiami Piper e ti presenti così: sei l\'assistente vocale di Francesco, che parla attraverso il suo '
+    'telefono con Nura. Stai parlando al telefono, in una chiamata vera: chi chiama sente la tua voce sintetizzata con Piper da un '
     'Redmi con Nura (postmarketOS). Rispondi in italiano parlato, di solito con una o due frasi brevi, la prima '
     'molto corta. Niente elenchi, simboli, emoji, markdown o output tecnico: tutto quello che scrivi viene letto '
     'ad alta voce. Le frasi di chi chiama arrivano da una trascrizione automatica e possono contenere errori: '
     'interpretale con buon senso e, se non capisci, chiedi di ripetere. Ogni frase comincia con l\'ora attuale '
     'tra parentesi quadre: usala se serve, ma non scriverla mai nella risposta.'
 )
-LOCKED = VOICE + (
-    ' Sei Claude e in questa fase non hai strumenti: puoi solo conversare. Per domande e chiacchiere generali '
+# Azioni sul telefono: il ponte le toglie dal testo letto e le manda al telefono sullo stesso canale delle risposte
+ACTIONS_COMMON = (
+    ' Puoi agire sul telefono da cui parli scrivendo un\'azione tra doppie parentesi quadre, su una riga a parte: '
+    'il sistema la esegue dopo aver letto le frasi che la precedono, e non viene letta ad alta voce. '
+    '[[riaggancia]] chiude questa chiamata: usala quando chi chiama vuole chiudere o te lo chiede, dopo un saluto breve.'
+)
+ACTIONS_OPS = (
+    ' Nella sessione operativa puoi anche: [[chiama +39NUMERO]] per comporre un numero (la chiamata in corso va in '
+    'attesa), [[sms +39NUMERO | testo]] per mandare un SMS (al massimo 160 caratteri), [[at COMANDO]] per un '
+    'comando AT al modem (per esempio AT+CHLD=3 per la conferenza, AT+CLCC per lo stato). Chiamate e SMS costano '
+    'credito: prima ripeti numero e testo e aspetta un sì esplicito. Per il modem usa queste azioni, non SSH.'
+)
+LOCKED = VOICE + ACTIONS_COMMON + (
+    ' In questa fase non hai strumenti: puoi solo conversare. Per domande e chiacchiere generali '
     'rispondi e basta. Se chi chiama ti chiede di fare qualcosa di operativo (comandi, rete, router, dispositivi, '
     'file, servizi, accessi), digli che prima ti serve la parola d\'ordine. Non dire mai qual è e non dare indizi. '
     'Non sei tu a verificarla: lo fa il sistema, che ti avviserà.'
 )
-UNLOCKED = VOICE + (
+UNLOCKED = VOICE + ACTIONS_COMMON + ACTIONS_OPS + (
     ' Chi chiama è Francesco, verificato dal sistema con numero e parola d\'ordine. Hai gli strumenti di Claude '
     'Code su un PC Linux nella rete dell\'ufficio, lo stesso collegato via USB al telefono. Prima di usare uno '
     'strumento di\' in poche parole cosa fai. Riassumi i risultati in una o due frasi parlate. Prima di azioni '
@@ -66,6 +79,31 @@ BASE = ['claude', '-p', '--strict-mcp-config', '--setting-sources', '', '--syste
         '--input-format', 'stream-json',
         '--output-format', 'stream-json', '--include-partial-messages', '--verbose']
 SENTENCE = re.compile(r'(.+?[.!?…:;])\s+', re.S)  # fine frase: punteggiatura seguita da uno spazio
+TAG = re.compile(r'\[\[\s*(.+?)\s*\]\]', re.S)  # azione sul telefono: [[riaggancia]], [[chiama +39...]]
+
+
+def parse_action(cmd, unlocked):
+    """Testo dell'azione -> (azione per il telefono, None) oppure (None, frase da dire se non è permessa)."""
+    word, _, rest = cmd.strip().partition(' ')
+    word, rest = word.lower(), rest.strip()
+    if word in ('riaggancia', 'chiudi'):
+        return {'type': 'hangup'}, None
+    if word in ('chiama', 'sms', 'at') and not unlocked:
+        return None, 'Per questo mi serve prima la parola d\'ordine.'
+    if word == 'chiama':
+        num = re.sub(r'[\s.-]', '', rest)
+        if re.fullmatch(r'\+?\d{6,15}', num):
+            return {'type': 'dial', 'number': num}, None
+    elif word == 'sms':
+        num, _, testo = rest.partition('|')
+        num = re.sub(r'[\s.-]', '', num)
+        testo = ' '.join(testo.split())
+        if re.fullmatch(r'\+?\d{6,15}', num) and 0 < len(testo) <= 160:
+            return {'type': 'sms', 'number': num, 'text': testo}, None
+    elif word == 'at':
+        if re.fullmatch(r'AT[A-Z0-9+?=,\"#*.:;_ -]{0,60}', rest, re.I) and not re.match(r'AT\s*(H|\+CHUP)', rest, re.I):
+            return {'type': 'at', 'command': rest}, None
+    return None, 'Non sono riuscita a capire quell\'azione.'
 
 
 def log(msg):
@@ -124,6 +162,7 @@ class Phone:
 
 
 def answer(sess, qid, text, phone, seq0=0):
+    """Passa la frase alla sessione e manda al telefono, una alla volta, frasi da dire e azioni da eseguire."""
     t = time.time()
     now = time.strftime('%H:%M, %d/%m/%Y')
     sess.p.stdin.write(json.dumps({'type': 'user', 'message': {'role': 'user', 'content': f'[{now}] {text}'}}) + '\n')
@@ -140,6 +179,38 @@ def answer(sess, qid, text, phone, seq0=0):
             log(f'-> [{seq}{"F" if final else ""} {time.time() - t:.2f} s] {s}')
             seq += 1
 
+    def act(cmd):
+        nonlocal seq
+        action, refusal = parse_action(cmd, sess.unlocked)
+        if action:
+            phone.send({'id': qid, 'seq': seq, 'text': '', 'action': action, 'final': False})
+            log(f'-> [{seq} azione] {action}')
+            seq += 1
+        else:
+            log(f'   azione rifiutata: {cmd!r}')
+            emit(refusal)
+
+    def sentences(text):
+        """Dice le frasi complete di `text` e restituisce il pezzo che resta."""
+        pos = 0
+        while (m := SENTENCE.match(text, pos)):
+            emit(m.group(1))
+            pos = m.end()
+        return text[pos:]
+
+    def flush_text():
+        """Frasi complete e azioni nell'ordine in cui arrivano; si aspetta se un [[ non è ancora chiuso."""
+        nonlocal buf
+        while (m := TAG.search(buf)):
+            emit(sentences(buf[:m.start()]))  # prima dell'azione si dice tutto
+            act(m.group(1))
+            buf = buf[m.end():]
+        cut = buf.find('[[')
+        if cut < 0:
+            buf = sentences(buf)
+        else:
+            buf = sentences(buf[:cut]) + buf[cut:]
+
     for line in sess.p.stdout:
         try:
             o = json.loads(line)
@@ -149,9 +220,7 @@ def answer(sess, qid, text, phone, seq0=0):
             ev = o['event']
             if ev.get('type') == 'content_block_delta' and ev['delta'].get('type') == 'text_delta':
                 buf += ev['delta']['text']
-                while (m := SENTENCE.match(buf)):
-                    emit(m.group(1))
-                    buf = buf[m.end():]
+                flush_text()
             elif ev.get('type') == 'content_block_start' and ev.get('content_block', {}).get('type') == 'tool_use':
                 if buf.strip():
                     emit(buf)
@@ -165,7 +234,8 @@ def answer(sess, qid, text, phone, seq0=0):
                 buf = ''
         elif o.get('type') == 'result':
             break
-    emit(buf, final=True)
+    flush_text()
+    emit(TAG.sub('', buf).replace('[[', ''), final=True)
 
 
 PIPER_REPO = os.path.expanduser(CONF.get('piper_repo', '~/Develop/_/piper'))

@@ -16,6 +16,7 @@ Uso: sudo python3 convo.py
 import json
 import os
 import queue
+import re
 import subprocess
 import threading
 import time
@@ -30,7 +31,8 @@ VOSK_MODEL = f'{HOME}/stt/vosk-model-small-it-0.22'
 CT = '/var/lib/miui-ct/data/local/tmp'  # la stessa cartella vista da mtkaudio come /data/local/tmp
 LOG, CMD, CTL = '/tmp/mtkaudio.log', '/tmp/mtkaudio.cmd', '/tmp/convo.cmd'
 Q, A = '/tmp/brain.q', '/tmp/brain.a'
-GREETING = 'Ciao, sono Claude. Dimmi pure.'
+GREETING = 'Ciao, sono Piper. Dimmi pure.'
+AT_FIFO = '/tmp/answer.cmd'  # comandi AT, inviati da answer.py che tiene aperta la porta del modem
 SILENCE_MS = 700   # pausa che chiude la frase di chi chiama
 THRESHOLD = 700    # soglia RMS del parlato
 
@@ -76,14 +78,49 @@ def play(name):
     mtk(f'mplay /data/local/tmp/{name}', 'play:', timeout=120)
 
 
-def speak(sentences):
-    """Sintetizza e suona le frasi man mano che arrivano: la sintesi della successiva va in parallelo."""
+def at(*cmds, pause=0.0):
+    """Manda comandi AT tramite answer.py (che tiene la porta del modem)."""
+    for c in cmds:
+        fd = os.open(AT_FIFO, os.O_WRONLY | os.O_NONBLOCK)
+        os.write(fd, (c + '\n').encode())
+        os.close(fd)
+        if pause:
+            time.sleep(pause)
+
+
+def execute(action):
+    """Azione arrivata dal ponte, nel punto della risposta in cui Claude l'ha scritta. Controllo anche qui."""
+    kind = action.get('type')
+    num = str(action.get('number', ''))
+    log(f'azione: {action}')
+    if kind == 'hangup':
+        at('ATH')
+        active.clear()  # answer.py vede la chiamata chiusa e manda stop; intanto si smette di ascoltare
+    elif kind == 'dial' and re.fullmatch(r'\+?\d{6,15}', num):
+        at(f'ATD{num};')
+    elif kind == 'sms' and re.fullmatch(r'\+?\d{6,15}', num):
+        text = ''.join(c for c in str(action.get('text', ''))[:160] if c.isprintable())
+        at('AT+CMGF=1', 'AT+CSCS="GSM"', pause=0.3)
+        at(f'AT+CMGS="{num}"', pause=1.0)  # il modem risponde con ">" e aspetta il testo
+        at(text + '\x1a')
+    elif kind == 'at' and re.fullmatch(r'AT[A-Z0-9+?=,"#*.:;_ -]{0,60}', str(action.get('command', '')), re.I):
+        at(action['command'])
+    else:
+        log(f'azione scartata: {action}')
+
+
+def speak(items):
+    """Sintetizza e suona le frasi man mano che arrivano (la sintesi della successiva va in parallelo) ed esegue
+    le azioni nel loro punto, dopo che le frasi precedenti sono state dette."""
     ready = queue.Queue()
 
     def synth():
-        for i, s in enumerate(sentences):
+        for i, s in enumerate(items):
             if not active.is_set():
                 break
+            if isinstance(s, dict):
+                ready.put(s)
+                continue
             name = f'say-{i % 8}.raw'
             t = time.time()
             render(s, f'{CT}/{name}')
@@ -93,7 +130,9 @@ def speak(sentences):
 
     threading.Thread(target=synth, daemon=True).start()
     while (name := ready.get()) is not None:
-        if active.is_set():
+        if isinstance(name, dict):
+            execute(name)
+        elif active.is_set():
             play(name)
 
 
@@ -165,7 +204,9 @@ def ask(text, n=[0]):
             if got == 0:
                 log(f'prima frase dopo {time.time() - t:.2f} s')
             got += 1
-            if a['text']:
+            if a.get('action'):
+                yield a['action']
+            elif a['text']:
                 yield a['text']
             if a.get('final'):
                 return

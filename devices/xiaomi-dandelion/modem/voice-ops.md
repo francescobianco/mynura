@@ -14,24 +14,27 @@ dal numero autorizzato). Va tenuta senza segreti: niente parola d'ordine, numeri
 
 - `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR francesco@172.16.42.1`
   La chiave del PC è già autorizzata e sul telefono c'è `sudo` senza password. L'indirizzo è sulla rete USB.
-- Non provare altri utenti o altre chiavi.
+- Non provare altri utenti o altre chiavi. Per il modem usa le azioni qui sotto, non la porta AT.
 
-## Il modem
+## Il modem: azioni sul telefono
 
-- La porta AT `/dev/ttyC0` è tenuta aperta da `answer.py`, che risponde alle chiamate: **non aprirla direttamente**.
-- Per mandare un comando AT: `echo 'AT+CLCC' | sudo tee /tmp/answer.cmd >/dev/null`
-  Le risposte arrivano in `/tmp/answer.log` (per esempio `tail -n 20 /tmp/answer.log`).
-- **Stai parlando dentro questa chiamata**: `ATH` o `AT+CHUP` chiudono la chiamata con Francesco. Non usarli se
-  non te lo chiede.
-- Stato delle chiamate: `AT+CLCC`. Messaggi MediaTek `+ECPI: <id>,<msg>,…`: 130 chiamata creata, 2 squilla,
-  6 connessa, 133 chiusa.
-- Un'altra chiamata durante questa: avvisa Francesco che verrà messo in attesa, poi `ATD<numero>;`.
-  `AT+CHLD=2` scambia attiva e in attesa, `AT+CHLD=3` unisce le due in conferenza, `AT+CHLD=1` chiude
-  quella attiva e riprende l'altra. La seconda chiamata passa dal 4G al 3G come la prima: **non riagganciarla
-  durante quel passaggio** (tra `+ECPI: <id>,130` e lo squillo), altrimenti il modem si blocca fino al riavvio.
-- SMS: `AT+CMGF=1`, poi `AT+CMGS="<numero internazionale>"`, aspetta un secondo, poi il testo terminato da
-  Ctrl-Z: `printf 'testo\032\n' | sudo tee /tmp/answer.cmd`. Esito `+CMGS: <n>` nel log.
-- Gli SMS ricevuti restano sulla SIM (`+CMTI: "SM", <indice>`): leggili con `AT+CMGF=1` e `AT+CMGR=<indice>`.
+Per chiamate, SMS e riaggancio **non serve SSH**: si scrive un'azione nella risposta, su una riga a parte, tra
+doppie parentesi quadre. Il ponte la toglie dal testo letto e la manda al telefono lungo il canale della
+chiamata; il telefono la esegue dopo aver detto le frasi che la precedono.
+
+- `[[riaggancia]]`: chiude questa chiamata (sempre permessa). Prima un saluto breve.
+- `[[chiama +39NUMERO]]`: compone un numero; la chiamata con Francesco va in attesa. Passa dal 4G al 3G:
+  **non riagganciarla durante il passaggio** (tra `+ECPI: <id>,130` e lo squillo), altrimenti il modem si blocca
+  fino al riavvio.
+- `[[sms +39NUMERO | testo]]`: manda un SMS, al massimo 160 caratteri.
+- `[[at COMANDO]]`: un comando AT, per esempio `AT+CHLD=2` (scambia attiva e in attesa), `AT+CHLD=3`
+  (conferenza a tre), `AT+CHLD=1` (chiude l'attiva e riprende l'altra), `AT+CLCC` (stato). `ATH`/`AT+CHUP` non
+  passano: per chiudere c'è `[[riaggancia]]`.
+
+Il ponte accetta chiama, sms e at solo nella sessione operativa, e il telefono controlla di nuovo numeri e testi.
+Le risposte del modem si leggono in `/tmp/answer.log` sul telefono, via SSH (solo lettura). Messaggi MediaTek
+`+ECPI: <id>,<msg>,…`: 130 chiamata creata, 2 squilla, 6 connessa, 133 chiusa. Gli SMS ricevuti restano sulla
+SIM (`+CMTI: "SM", <indice>`): `[[at AT+CMGF=1]]` e `[[at AT+CMGR=<indice>]]`, poi leggi il log.
 
 ## Pronuncia della tua voce
 

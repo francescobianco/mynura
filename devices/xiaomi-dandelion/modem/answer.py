@@ -73,7 +73,7 @@ def send(cmd):
 
 
 # Stato della chiamata: id della chiamata in arrivo, quando è stata risposta
-state = {'incoming': None, 'answered_at': None, 'ata_sent': False, 'seen_at': None, 'log_pos': 0, 'caller': ''}
+state = {'incoming': None, 'answered_at': None, 'ata_sent': False, 'seen_at': None, 'log_pos': 0, 'caller': '', 'calls': set()}
 
 
 def audio_ready(timeout=5):
@@ -103,7 +103,7 @@ def answer():
 
 
 def reset():
-    state.update(incoming=None, answered_at=None, ata_sent=False, seen_at=None, caller='')
+    state.update(incoming=None, answered_at=None, ata_sent=False, seen_at=None, caller='', calls=set())
 
 
 def handle(line):
@@ -123,6 +123,9 @@ def handle(line):
     m = re.match(r'\+ECPI:\s*(\d+),(\d+),', line)
     if m:
         cid, msg = m.group(1), int(m.group(2))
+        # Chiamate aperte: 0 = in arrivo, 130 = in uscita (anche quelle fatte da Piper con [[chiama ...]])
+        if msg in (0, 130):
+            state['calls'].add(cid)
         if msg == 0:
             state['incoming'] = cid; state['seen_at'] = state['seen_at'] or time.time()
         elif msg == 6 and state['ata_sent'] and state['answered_at'] is None:
@@ -133,6 +136,10 @@ def handle(line):
             else:
                 convo_ctl(f'start {int(time.time())} {state["caller"] or "sconosciuto"}')
         elif msg == 133:
+            state['calls'].discard(cid)
+            if state['calls']:  # resta un'altra chiamata (per esempio quella in attesa): audio e conversazione restano
+                log(f'*** chiamata {cid} chiusa, restano {sorted(state["calls"])}')
+                return
             log('*** chiamata chiusa')
             if state['ata_sent']:
                 if MODE != 'eco':

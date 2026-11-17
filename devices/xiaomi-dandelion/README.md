@@ -141,6 +141,21 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-17 — ↩️ Azioni sul telefono dal canale della chiamata, l'assistente si chiama Piper (Claude per @francesco)
+
+- Richiesta di @francesco: la sessione non deve ricollegarsi al telefono via SSH per chiudere la chiamata, farne
+  un'altra o mandare un SMS; visto che tutto parte dal telefono, deve avere una «azione di ritorno» sullo stesso
+  canale.
+- Claude scrive l'azione nella risposta tra doppie parentesi quadre: `[[riaggancia]]`, `[[chiama +39…]]`,
+  `[[sms +39… | testo]]`, `[[at AT+CHLD=3]]`. `brain-pc.py` la toglie dal testo letto e la manda al telefono in
+  `/tmp/brain.a` come `{"id", "seq", "action"}`, nell'ordine giusto rispetto alle frasi. `convo.py` la esegue
+  dopo aver detto le frasi precedenti, mandando i comandi AT ad `answer.py` (`/tmp/answer.cmd`).
+- Limiti nel codice: `riaggancia` sempre; `chiama`, `sms` e `at` solo nella sessione operativa e con un sì a voce;
+  `ATH`/`AT+CHUP` non passano da `at`; numeri e testi si ricontrollano sul telefono.
+- `answer.py` tiene il conto delle chiamate aperte (`+ECPI` 0/130 e 133): se si chiude una seconda chiamata fatta
+  da Piper, audio e conversazione restano per quella in attesa.
+- L'assistente si presenta come **Piper**, l'assistente vocale di Francesco; il saluto è «Ciao, sono Piper».
+
 ### 2026-11-17 — 🗣️ Pronuncia di Piper correggibile a voce, durante la chiamata (Claude per @francesco)
 
 - Prima prova vera della sessione operativa: parola d'ordine riconosciuta al primo colpo, scansione della rete
