@@ -162,6 +162,12 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
   di speaker, due note discendenti (re 587 Hz, poi la 440 Hz). Si suona alla fine di ogni risposta non interrotta.
 - Fuori da una chiamata la coda funziona ma le scritture non sono in tempo reale (il modem non consuma l'audio):
   l'interruzione si prova solo in chiamata.
+- **Prova in chiamata riuscita**: domanda doppia (7+7 e formula delle equazioni di secondo grado), Piper dice
+  «Sette più sette fa quattordici» e mentre legge la formula @francesco la interrompe con «fermati, parliamo di
+  chimica»: si ferma, Claude riceve anche «avevo detto solo: Sette più sette fa quattordici» e risponde «Certo,
+  fermo tutto» e la definizione di chimica; seconda interruzione riuscita. Alla fine «ci vediamo domani, chiudi
+  adesso» → saluto e `[[riaggancia]]`: **la chiamata la chiude Piper**. Trascrizione pronta 0,1 s dopo la pausa,
+  prima frase di Claude dopo circa 1,7 s. Un'interruzione spuria («ebay hogan», parlato breve) senza danni.
 
 ### 2026-11-17 — 🔤 Correzione della pronuncia a voce con l'azione [[pronuncia]] (Claude per @francesco)
 
