@@ -139,6 +139,31 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-17 — 🔈 HAL audio MediaTek comandato da Nura: si apre la voce del modem (Claude per @francesco)
+
+- **`modem/audio/mtkaudio.c`**: carica `audio.primary.mt6765.so` di MIUI con `libhardware` (`hw_get_module_by_class`)
+  e lo comanda da una shell su stdin, senza audioserver né binder. Compilato **sul telefono** con clang/lld di
+  Alpine (`--target=armv7a-linux-androideabi29`, `-mfloat-abi=softfp`, senza header: le strutture di
+  `hardware/audio.h` di Android 10 sono ricopiate nel sorgente; avvio con `__libc_init` di bionic al posto di
+  crtbegin). Si collega contro `libc`/`libdl` dell'APEX runtime e `libhardware` del system (`modem/audio/build.sh`).
+  Gira nel contenitore con `nsenter -t <init> -m -p`; `modem/audio/start.sh` lo avvia con i comandi da
+  `/tmp/mtkaudio.cmd`.
+- Cosa serve all'HAL nel contenitore: `/dev/snd/*`, `audio_ipi`, `accdet`, `scp` (ora in `ct-start.sh`) e
+  **`hwservicemanager`** (con `servicemanager` e `vndservicemanager`, ora nell'`init.rc`): senza, l'HAL resta
+  bloccato all'apertura. Con questi: `open` 0, versione `0x300`, `init_check` 0, apre `ccci_aud` e
+  `ccci_raw_audio` e mappa la memoria condivisa della voce (`vendor.audiohal.speech.shm_init=1`).
+- **Tentativi in chiamata** (chiama @francesco, `modem/answer.py` risponde e manda i comandi a mtkaudio):
+  1. `routing=2` sullo stream e poi `set_mode(2)`: tutto 0, ma il kernel non apre la voce. @francesco sente solo
+     un piccolo clic (l'amplificatore dell'altoparlante).
+  2. Patch da dispositivo a dispositivo come Android 10 (`80000040` rete → `2` altoparlante, `80000004`
+     microfono → `10000` rete): **`-38`**. Nell'HAL MediaTek le patch dispositivo → dispositivo servono solo alla radio FM.
+  3. `set_mode(2)` e poi **patch dallo stream di uscita (mix, handle 13) all'altoparlante**: 0, e il kernel apre
+     la voce del modem: `mtk_voice_pcm_open()` sui due versi e `mtk_voice1_prepare()` a 32 kHz, 2 canali.
+- `logd` nel contenitore esce con stato 1: chiede gruppi di controllo `blkio` e `memory` che il nostro kernel non ha
+  (`/system/etc/cgroups.json`). Senza, i log dell'HAL non si leggono.
+- SMS: con `AT+CNMI=2,1,0,0,0` i messaggi restano sulla SIM e arriva solo `+CMTI`, senza conferma da mandare. Prima
+  la rete ripeteva lo stesso SMS ogni minuto.
+
 ### 2026-11-17 — 📞 Prima chiamata vocale da Nura: squilla e risponde, ancora senza audio (Claude per @francesco)
 
 - **Piper sul telefono**: `piper-tts` 1.7.0 dal repository edge/testing di Alpine (con `onnxruntime`), voce italiana
