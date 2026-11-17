@@ -14,8 +14,10 @@ AUDIO_FIFO = '/tmp/mtkaudio.cmd'
 # Come Android 10 in chiamata: modalità "in chiamata" (2), poi patch dallo stream di uscita (mix) all'altoparlante (2).
 # L'HAL MediaTek accende la voce del modem al cambio di uscita in chiamata ("+routing createAudioPatch Mixer->%x").
 # Le patch da dispositivo a dispositivo (rete -> altoparlante) danno -38: l'HAL le usa solo per la radio FM.
-AUDIO_ON = ['open 2 2 48000', 'mode 2', 'mixpatch 2', 'vol 1.0']
-AUDIO_OFF = ['unpatchall', 'mode 0', 'close']
+# Poi la frase di Piper sullo stream "incall music" (16 kHz mono: MediaTek la manda al modem come background sound).
+SAY = '/data/local/tmp/frase-16000-1.raw'
+AUDIO_ON = ['open 2 2 48000', 'mode 2', 'mixpatch 2', 'vol 1.0', 'sleep 1', 'mopen 16000 1', f'mplay {SAY}']
+AUDIO_OFF = ['mclose', 'unpatchall', 'mode 0', 'close']
 
 
 def audio(cmds):

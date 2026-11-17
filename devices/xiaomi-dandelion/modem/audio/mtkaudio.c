@@ -13,6 +13,10 @@
  *   oparam <k=v;...>    set_parameters dello stream di uscita
  *   play <file.raw>     scrive PCM 16 bit sullo stream di uscita
  *   close               chiude lo stream di uscita
+ *   mopen <rate> [canali]  apre lo stream "incall music" (flag 0x10000 verso 0x10000, la rete): MediaTek
+ *                       lo manda al modem come background sound, lo sente chi è in linea
+ *   mplay <file.raw>    scrive PCM 16 bit sullo stream incall music
+ *   mclose              chiude lo stream incall music
  *   patch <src> <sink>  create_audio_patch da dispositivo a dispositivo (tipi in esadecimale), come fa
  *                       Android 10 in chiamata: 80000040 (rete) -> 2 (altoparlante), 80000004 (microfono) -> 10000 (rete)
  *   mixpatch <sink>     create_audio_patch dallo stream di uscita aperto (handle 13) a un dispositivo
@@ -177,12 +181,47 @@ __attribute__((naked, noreturn)) void _start(void)
 
 /* ---- shell ---- */
 static struct audio_hw_device *dev;
-static struct audio_stream_out *out;
+static struct audio_stream_out *out, *music;
 static int patches[16], npatches;
 
 static void keep_patch(int r, int h)
 {
 	if (!r && npatches < 16) patches[npatches++] = h;
+}
+
+static struct audio_stream_out *open_out(int handle, uint32_t d, uint32_t f, uint32_t rate, uint32_t ch)
+{
+	struct audio_stream_out *o = 0;
+	struct audio_config c = { 0 };
+	c.sample_rate = rate ? rate : 48000;
+	c.channel_mask = ch == 1 ? 0x1 : 0x3; /* MONO / STEREO */
+	c.format = 0x1; /* PCM_16_BIT */
+	c.offload_info.version = 0x0201;
+	c.offload_info.size = sizeof c.offload_info;
+	int r = dev->open_output_stream(dev, handle, d, f, &c, &o, "");
+	printf("open_output_stream(%x, %x): %d rate %u ch %x fmt %x\n", d, f, r, c.sample_rate,
+	       c.channel_mask, c.format);
+	if (r) return 0;
+	printf("buffer %u byte, latenza %u ms\n", (unsigned)o->common.get_buffer_size(&o->common),
+	       o->get_latency(o));
+	return o;
+}
+
+static void play(struct audio_stream_out *o, const char *path)
+{
+	static char buf[16384];
+	ssize_t k, tot = 0;
+	int fd = open(path, 0);
+	if (fd < 0 || !o) { printf("play: errore\n"); if (fd >= 0) close(fd); return; }
+	size_t bs = o->common.get_buffer_size(&o->common);
+	if (bs > sizeof buf) bs = sizeof buf;
+	while ((k = read(fd, buf, bs)) > 0) {
+		ssize_t w = o->write(o, buf, k);
+		if (w < 0) { printf("write: %d\n", (int)w); break; }
+		tot += w;
+	}
+	close(fd);
+	printf("play: %d byte\n", (int)tot);
 }
 
 static char *arg(char *s)
@@ -290,6 +329,17 @@ int main(int argc, char **argv, char **envp)
 			}
 		} else if (!strncmp(line, "unpatch ", 8)) {
 			printf("release_audio_patch: %d\n", dev->release_audio_patch(dev, (int)strtoul(a, 0, 0)));
+		} else if (!strncmp(line, "mopen ", 6)) {
+			char *p = a;
+			uint32_t rate = strtoul(p, &p, 10), ch = strtoul(p, &p, 10);
+			if (music) dev->close_output_stream(dev, music);
+			music = open_out(14, 0x10000, 0x10000, rate, ch);
+		} else if (!strncmp(line, "mplay ", 6)) {
+			play(music, a);
+		} else if (!strncmp(line, "mclose", 6)) {
+			if (music) dev->close_output_stream(dev, music);
+			music = 0;
+			printf("chiuso\n");
 		} else if (!strncmp(line, "sleep ", 6)) {
 			usleep((unsigned)(strtod(a, 0) * 1e6));
 			printf("ok\n");
@@ -299,6 +349,7 @@ int main(int argc, char **argv, char **envp)
 			printf("comando sconosciuto: %s\n", line);
 		}
 	}
+	if (music) dev->close_output_stream(dev, music);
 	if (out) dev->close_output_stream(dev, out);
 	dev->common.close(&dev->common);
 	return 0;
