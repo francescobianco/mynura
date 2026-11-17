@@ -141,6 +141,29 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-17 — 🔐 Sessione operativa di Claude Code al telefono, con parola d'ordine (Claude per @francesco)
+
+- Il fruscio è sparito con `mute 1` (microfono del telefono spento) e Piper passa ancora: lo stream incall
+  music si mescola dopo il microfono. Audio pronto 0,15 s dopo lo squillo, prima di `ATA`.
+- Richiesta di @francesco: al telefono una vera sessione di Claude Code ("connettiti al router e dimmi quali
+  dispositivi sono connessi"), con una **parola d'ordine** chiesta solo quando si passa dalle chiacchiere alle azioni.
+- `modem/brain-pc.py` ha due livelli, decisi **nel codice** e non dal modello:
+  - **bloccato** a inizio chiamata: sessione `claude -p` senza strumenti (`--tools ''`, modello haiku). Per le
+    domande generali risponde; per le richieste operative chiede la parola d'ordine, senza mai dirla;
+  - **operativo**: se la trascrizione contiene la parola d'ordine (confronto tollerante, `difflib` ≥ 0,85)
+    **e** il numero di chi chiama (`+CLIP`, passato da `answer.py` a `convo.py` e al ponte) è tra quelli
+    autorizzati, la sessione riparte con `--resume` (stessa conversazione), modello sonnet, strumenti di Claude
+    Code e `--permission-mode auto`. Vale fino a fine chiamata. Serve `--system-prompt-snapshot off`, altrimenti
+    con `--resume` restano le istruzioni della sessione bloccata.
+  - La parola d'ordine non arriva mai a Claude e non finisce nei log: al suo posto "[parola d'ordine]".
+  - Parola d'ordine e numeri autorizzati stanno **solo** in `~/.config/nura-voice/config.json` sul PC
+    (permessi 600), mai nel repository: `{"passphrase": "...", "callers": ["+39..."], "workdir": "~/nura-voice"}`.
+- Prove simulate: chiacchiera senza domande; "connettiti al router…" → chiede la parola d'ordine; parola d'ordine
+  dal numero autorizzato → trova il router e i dispositivi visti in rete dal PC; la stessa parola da un altro
+  numero → resta bloccato.
+- Limiti noti: la parola d'ordine si dice a voce (chi è vicino la sente) e il numero di chi chiama si può
+  falsificare. Per questo valgono insieme, e i permessi `auto` di Claude Code bloccano comunque le azioni rischiose.
+
 ### 2026-11-17 — 💬 Conversazione con Claude in chiamata (Claude per @francesco)
 
 - **Prima conversazione vera**: @francesco chiama, il telefono risponde, Vosk trascrive sul telefono, il PC

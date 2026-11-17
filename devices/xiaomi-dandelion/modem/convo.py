@@ -2,7 +2,7 @@
 
 Servizio sempre acceso: carica Piper e Vosk una volta sola (Piper impiega 12 s a caricare il modello e circa
 1 s a sintetizzare una frase) e prepara le frasi fisse. Aspetta i comandi di answer.py su /tmp/convo.cmd:
-  start <id_chiamata>   a chiamata connessa: la voce del modem e gli stream sono già pronti, si saluta subito
+  start <id_chiamata> <numero>   a chiamata connessa: la voce del modem e gli stream sono già pronti, si saluta subito
   stop                  a fine chiamata
 Per rispondere in fretta:
   - Vosk trascrive **mentre** chi chiama parla: mtkaudio (recvad) scrive l'audio frame per frame e qui lo si
@@ -33,6 +33,7 @@ THRESHOLD = 700    # soglia RMS del parlato
 
 active = threading.Event()
 call_id = ['']
+caller = ['']
 mtk_lock = threading.Lock()
 
 
@@ -141,10 +142,11 @@ def ask(text, n=[0]):
     qid = f'{call_id[0]}-{n[0]}'
     pos = os.path.getsize(A)
     with open(Q, 'a') as f:
-        f.write(json.dumps({'id': qid, 'call': call_id[0], 'text': text}, ensure_ascii=False) + '\n')
+        f.write(json.dumps({'id': qid, 'call': call_id[0], 'caller': caller[0], 'text': text},
+                           ensure_ascii=False) + '\n')
     t = time.time()
     got = 0
-    while time.time() - t < 45 and active.is_set():
+    while time.time() - t < 180 and active.is_set():  # con gli strumenti una risposta può richiedere tempo
         with open(A, errors='replace') as f:
             f.seek(pos)
             data = f.read()
@@ -211,6 +213,7 @@ def main():
                     continue
                 if cmd[0] == 'start' and not active.is_set():
                     call_id[0] = cmd[1] if len(cmd) > 1 else str(int(time.time()))
+                    caller[0] = cmd[2] if len(cmd) > 2 else ''
                     active.set()
                     threading.Thread(target=conversation, daemon=True).start()
                     log(f'chiamata {call_id[0]}')

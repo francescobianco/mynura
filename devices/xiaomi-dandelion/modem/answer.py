@@ -73,7 +73,7 @@ def send(cmd):
 
 
 # Stato della chiamata: id della chiamata in arrivo, quando è stata risposta
-state = {'incoming': None, 'answered_at': None, 'ata_sent': False, 'seen_at': None, 'log_pos': 0}
+state = {'incoming': None, 'answered_at': None, 'ata_sent': False, 'seen_at': None, 'log_pos': 0, 'caller': ''}
 
 
 def audio_ready(timeout=5):
@@ -103,11 +103,15 @@ def answer():
 
 
 def reset():
-    state.update(incoming=None, answered_at=None, ata_sent=False, seen_at=None)
+    state.update(incoming=None, answered_at=None, ata_sent=False, seen_at=None, caller='')
 
 
 def handle(line):
     log(line)
+    # +CLIP: "<numero>",<tipo>,...: il numero di chi chiama, passato a convo.py (e da lì al ponte)
+    m = re.match(r'\+CLIP:\s*"([^"]*)"', line)
+    if m:
+        state['caller'] = m.group(1)
     # +EAIC: <id>,<numero>,<tipo>,<modo>,<seq>: il modem chiede se accettare la chiamata
     m = re.match(r'\+EAIC:\s*(\d+),[^,]*,[^,]*,[^,]*,(\d+)', line)
     if m:
@@ -127,7 +131,7 @@ def handle(line):
             if MODE == 'eco':
                 audio(AUDIO_ON)
             else:
-                convo_ctl(f'start {int(time.time())}')
+                convo_ctl(f'start {int(time.time())} {state["caller"] or "sconosciuto"}')
         elif msg == 133:
             log('*** chiamata chiusa')
             if state['ata_sent']:
