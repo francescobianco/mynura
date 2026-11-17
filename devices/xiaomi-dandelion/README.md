@@ -131,10 +131,49 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 - [x] Capire se LK accetta `fastboot boot` da RAM su questo telefono: **no**. Riceve l'immagine ma va in panic, anche con il boot.img stock (2026-11-09)
 - [ ] Provare l'avvio scrivendo l'immagine nella partizione `boot`
 - [x] Decidere come fornire il dtb: entrambi i modi, come nello stock
+- [x] Chiamate vocali in uscita: squillano e vengono risposte; mai riagganciare durante il passaggio al 3G (diario 2026-11-17)
+- [ ] Audio delle chiamate (microfono/altoparlante o voce di Piper): passa dal DSP del modem, serve l'audio MediaTek
+- [ ] Porta AT `ttyC0` piena quando nessuno la legge: serve un demone sempre in ascolto (RIL o oFono)
 
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-17 — 📞 Prima chiamata vocale da Nura: squilla e risponde, ancora senza audio (Claude per @francesco)
+
+- **Piper sul telefono**: `piper-tts` 1.7.0 dal repository edge/testing di Alpine (con `onnxruntime`), voce italiana
+  `it_IT-paola-medium`. Funziona da riga di comando. Metterla dentro una chiamata richiede l'audio di chiamata
+  MediaTek (passa dal DSP del modem, «background sound» tramite `ccci_aud` e HAL audio): non ancora fatto.
+- **Chiamate di prova** con `ATD<numero>;` su `/dev/ttyC0`, verso il numero di @francesco, mute, con riaggancio
+  immediato. **Nessuna ha fatto squillare** il telefono di @francesco.
+  - Primo tentativo: `OK`, poi `+ECPI: 1,130` (chiamata creata) e `+CREG: …,3`: il modem passa al 3G perché qui in
+    4G le chiamate non passano (CSFB). Lo script ha riagganciato dopo 5 s per un controllo sbagliato, a metà del
+    passaggio, prima dello squillo.
+  - Da quel momento ogni `ATD` resta muto: nessun `OK`, nessun `+ECPI`, nessun passaggio al 3G, `AT+CEER` dice
+    `0,NONE`. Il resto del modem risponde: `AT`, `AT+CLCC` vuoto, registrato in LTE, SMS in arrivo.
+  - Non è il credito (senza credito la rete risponde con un messaggio o chiude con una causa) e non è la rete 3G: una
+    richiesta USSD (`AT+CUSD=1,"*123#",15`) passa al 3G e riceve risposta (`*123#` però non è il codice CoopVoce del credito).
+  - Né `AT+CFUN=4` / `AT+CFUN=1` (radio spenta e riaccesa) né l'impostazione dei comandi che manda il RIL MediaTek
+    (`AT+ECPI=4294967295`, `AT+CRC=1`, `AT+CLIP=1`, `AT+COLP=0`, `AT+CSSN=1,1`, `AT+CCWA=1`) sbloccano `ATD`.
+- **Comandi del RIL MIUI** (`vendor/lib/libmtk-ril.so`, letto con `strings`): oltre ai comandi sopra, compaiono
+  `AT+EAIC=2` (approvazione delle chiamate in arrivo), `AT+ECFGSET="disable_cs_call","0"|"1"`, `AT+ECCP=1`,
+  `AT+ECUSD=…` (USSD alla MediaTek), `ATDE` / `ATDER` (emergenza). Stato di partenza del modem: `+ECPI: 0`,
+  `+EAIC: 3`, `+CRC: 0`. `AT+ECFGGET="disable_cs_call"` dà `ERROR`.
+- **Porta AT piena**: il kernel ripete ogni 10 s `[ccci1/pot]port_full status=800000`. Il bit 23 nella tabella
+  `md1_ccci_ports` di `eccci/port/port_cfg.c` è `ttyC0`: quando nessuno tiene aperta la porta, gli avvisi del modem
+  (`+CREG`, `+CMT`, …) si accumulano. Un SMS inviato da @francesco alle 16:30 è arrivato sulla porta solo alle 19:42,
+  alla prima apertura dopo ore. Senza conferma (`AT+CNMA` dà `ERROR`) la rete ripete il messaggio. Serve un
+  processo che tenga sempre aperta e letta la porta, come fa `mtkfusionrild` o farebbe oFono.
+- Durante le chiamate partite e durante l'USSD il kernel scrive `[ccci1/sys]system message (ffffffff 105 2 0)`,
+  assente negli `ATD` rimasti muti.
+- **Confermato con un riavvio del telefono** (modem ripartito da zero, contenitore rimesso su): la prima `ATD`
+  lasciata andare senza interruzioni **squilla e viene risposta** (chiamata ricevuta, conferma di @francesco). Sequenza di `+ECPI: 1,<msg>,…`: `130` chiamata
+  creata, `3` e `4` connessione in corso (passaggio al 3G), `2` **squillo** dopo 10 s, `132` e `6` **risposta**,
+  poi `ATH` dopo 5 s: `134`, `1`, `129`, `133` con causa `16` (chiusura normale). Il telefono resta muto: l'audio
+  di chiamata non è ancora collegato.
+- **Regola**: non riagganciare durante il passaggio al 3G, cioè tra `+ECPI: 1,130` e lo squillo (`+ECPI: 1,2`).
+  Un `ATH` in quella fase blocca le chiamate fino al riavvio del modem, e `AT+CFUN=4`/`1` non basta.
+  Lo script di prova è `modem/call.py` (il numero si passa come argomento).
 
 ### 2026-11-17 — 🎉 SIM letta e telefono registrato in 4G sotto Nura (Claude per @francesco)
 
@@ -151,6 +190,8 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 - **Comandi AT su `/dev/ttyC0`** (script di prova `modem/at.py`): firmware `MOLY.LR12A.R3.MP.V107.5.P101`. Con
   `AT+CFUN=1`: `+CPIN: READY` (SIM CoopVoce, senza PIN), `+CREG: 1` e `+CEREG: 1` (registrato), `+COPS: 0,0,"22210",7`
   (LTE), `+CSQ: 7`. Arriva anche un SMS come `+CMT`, consegnato sulla porta seriale.
+- **Primi SMS inviati da Nura** con `modem/sms.py` (`AT+CMGF=1`, `AT+CMGS`): due messaggi verso il numero di
+  @francesco, accettati dalla rete (`+CMGS: 3` e `4`) e **ricevuti**, conferma di @francesco.
 - Prossimi passi: chiamata vocale (con quale RIL, e come passa l'audio), SMS con conferma (`AT+CNMA`) o salvati in SIM,
   poi oFono o un ponte diretto verso Asterisk.
 
