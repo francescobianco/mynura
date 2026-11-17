@@ -20,6 +20,9 @@
  *   iopen <dev> <sorgente> <rate> [canali]  apre lo stream di ingresso (dev in esadecimale); per la voce
  *                       di chi chiama: 80000040 (rete) con sorgente 3 (downlink) o 4 (chiamata)
  *   rec <file.raw> <s>  registra PCM 16 bit dallo stream di ingresso per <s> secondi
+ *   recvad <file.raw> <max_s> [silenzio_ms] [soglia]  registra finché chi parla tace: parte al primo frame
+ *                       sopra soglia (RMS), si ferma dopo silenzio_ms sotto soglia o dopo max_s; stampa
+ *                       "recvad: <byte> parlato <0|1>"
  *   iclose              chiude lo stream di ingresso
  *   patch <src> <sink>  create_audio_patch da dispositivo a dispositivo (tipi in esadecimale), come fa
  *                       Android 10 in chiamata: 80000040 (rete) -> 2 (altoparlante), 80000004 (microfono) -> 10000 (rete)
@@ -392,6 +395,34 @@ int main(int argc, char **argv, char **envp)
 			}
 			if (fd >= 0) close(fd);
 			printf("rec: %u byte, rate %u, picco %ld\n", (unsigned)tot, rate, peak);
+		} else if (!strncmp(line, "recvad ", 7)) {
+			char *p = a, *path = a;
+			while (*p && *p != ' ') p++;
+			if (*p) *p++ = 0;
+			double maxs = strtod(p, &p);
+			unsigned sil_ms = strtoul(p, &p, 10), thr = strtoul(p, &p, 10);
+			if (!sil_ms) sil_ms = 900;
+			if (!thr) thr = 700;
+			if (!in) { printf("recvad: stream di ingresso chiuso\n"); continue; }
+			unsigned rate = in->common.get_sample_rate(&in->common);
+			/* frame da 20 ms, mono 16 bit */
+			size_t fb = rate / 50 * 2, tot = 0, maxb = (size_t)(maxs * rate * 2), quiet = 0;
+			static short fr[4800];
+			if (fb > sizeof fr) fb = sizeof fr;
+			int fd = open(path, 0x241, 0644), spoke = 0;
+			while (tot < maxb) {
+				ssize_t k = in->read(in, fr, fb);
+				if (k <= 0) { printf("read: %d\n", (int)k); break; }
+				double e = 0;
+				for (ssize_t i = 0; i < k / 2; i++) e += (double)fr[i] * fr[i];
+				/* RMS >= soglia, confrontando i quadrati */
+				if (e / (k / 2) >= (double)thr * thr) { spoke = 1; quiet = 0; } else if (spoke) quiet += 20;
+				if (spoke && fd >= 0) write(fd, fr, k);
+				tot += k;
+				if (spoke && quiet >= sil_ms) break;
+			}
+			if (fd >= 0) close(fd);
+			printf("recvad: %u byte parlato %d\n", (unsigned)tot, spoke);
 		} else if (!strncmp(line, "iclose", 6)) {
 			if (in) dev->close_input_stream(dev, in);
 			in = 0;
