@@ -11,9 +11,10 @@ dev = sys.argv[1] if len(sys.argv) > 1 else '/dev/ttyC0'
 hold = float(sys.argv[2]) if len(sys.argv) > 2 else 8
 FIFO = '/tmp/answer.cmd'
 AUDIO_FIFO = '/tmp/mtkaudio.cmd'
-# Come Android 10 in chiamata: modalità "in chiamata" (2), poi le patch da dispositivo a dispositivo,
-# rete (80000040) -> altoparlante (2) e microfono (80000004) -> rete (10000). L'HAL MediaTek accende la voce del modem.
-AUDIO_ON = ['open 2 2 48000', 'mode 2', 'patch 80000040 2', 'patch 80000004 10000', 'vol 1.0']
+# Come Android 10 in chiamata: modalità "in chiamata" (2), poi patch dallo stream di uscita (mix) all'altoparlante (2).
+# L'HAL MediaTek accende la voce del modem al cambio di uscita in chiamata ("+routing createAudioPatch Mixer->%x").
+# Le patch da dispositivo a dispositivo (rete -> altoparlante) danno -38: l'HAL le usa solo per la radio FM.
+AUDIO_ON = ['open 2 2 48000', 'mode 2', 'mixpatch 2', 'vol 1.0']
 AUDIO_OFF = ['unpatchall', 'mode 0', 'close']
 
 
