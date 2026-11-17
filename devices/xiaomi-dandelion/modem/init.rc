@@ -2,6 +2,27 @@
 on early-init
     mkdir /dev/socket 0755 root root
 
+    # Gruppi di processi che i servizi Android si aspettano (dall'init.rc di sistema)
+    mkdir /dev/cpuset/foreground
+    copy /dev/cpuset/cpus /dev/cpuset/foreground/cpus
+    copy /dev/cpuset/mems /dev/cpuset/foreground/mems
+    mkdir /dev/cpuset/background
+    copy /dev/cpuset/cpus /dev/cpuset/background/cpus
+    copy /dev/cpuset/mems /dev/cpuset/background/mems
+    mkdir /dev/cpuset/system-background
+    copy /dev/cpuset/cpus /dev/cpuset/system-background/cpus
+    copy /dev/cpuset/mems /dev/cpuset/system-background/mems
+    mkdir /dev/cpuset/top-app
+    copy /dev/cpuset/cpus /dev/cpuset/top-app/cpus
+    copy /dev/cpuset/mems /dev/cpuset/top-app/mems
+    mkdir /dev/cpuset/restricted
+    copy /dev/cpuset/cpus /dev/cpuset/restricted/cpus
+    copy /dev/cpuset/mems /dev/cpuset/restricted/mems
+    mkdir /dev/stune/foreground
+    mkdir /dev/stune/background
+    mkdir /dev/stune/top-app
+    mkdir /dev/stune/rt
+
 on late-init
     trigger post-fs-data
     trigger boot
@@ -20,8 +41,15 @@ on post-fs-data
     chmod 0666 /dev/vndbinder
 
 on boot
+    start logd
     start nvram_daemon
     start vendor.ccci_fsd
+    start vendor.ccci_rpcd
+    # Da init.md_apps.rc di MIUI: versione del firmware del modem
+    setprop ro.vendor.md_apps.support 1
+    setprop ro.vendor.md_apps.load_type user
+    setprop ro.vendor.md_apps.load_verno "MOLY.LR12A.R3.MP.V107.5.P101"
+    setprop ro.vendor.md_apps.load_gencfg "GEN93_USER"
 
 on property:vendor.service.nvram_init=Ready
     start ccci_mdinit
@@ -40,9 +68,29 @@ service vendor.ccci_fsd /vendor/bin/ccci_fsd 0
     disabled
     seclabel u:r:init:s0
 
+# Il modem chiede ad Android dati dell'hardware (GPIO, ADC, indice RF) via RPC
+service vendor.ccci_rpcd /vendor/bin/ccci_rpcd 0
+    user radio
+    group radio system
+    oneshot
+    disabled
+    seclabel u:r:init:s0
+
 service ccci_mdinit /vendor/bin/ccci_mdinit 0
     user system
     group radio system
     oneshot
     disabled
     seclabel u:r:init:s0
+
+# Log di Android, per leggere ccci_fsd e nvram_daemon con logcat.
+# Senza "file /proc/kmsg": toglierebbe i messaggi del kernel al registro di Nura.
+service logd /system/bin/logd
+    socket logd stream 0666 logd logd
+    socket logdr seqpacket 0666 logd logd
+    socket logdw dgram+passcred 0222 logd logd
+    file /dev/kmsg w
+    user logd
+    group logd system package_info readproc
+    capabilities SYSLOG AUDIT_CONTROL SETGID
+    disabled

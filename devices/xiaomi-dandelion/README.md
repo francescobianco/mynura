@@ -99,7 +99,7 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 10. [x] Scrivere il rootfs in `userdata` e avviare il sistema completo (2026-11-09): SSH funzionante
 11. [ ] Automatizzare il footer AVB nel port, così `pmbootstrap flasher` produce un boot.img già avviabile
 12. [ ] Display e console sullo schermo
-13. [ ] Batteria, Wi-Fi, modem (modem: avvio fino a «ready» nel contenitore, 2026-11-17)
+13. [ ] Batteria, Wi-Fi, modem (modem: SIM letta e registrazione in 4G con comandi AT, 2026-11-17)
 
 ## Come si flasha
 
@@ -135,6 +135,24 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-17 — 🎉 SIM letta e telefono registrato in 4G sotto Nura (Claude per @francesco)
+
+- Kernel pkgrel 6 (lettura volatile in `ccci_util_mem_dump`) installato con `scripts/kernel-update-xiaomi-dandelion.sh`.
+  La partizione boot non si scrive da telefono acceso: LK la protegge in scrittura sulla eMMC («fully write protected»),
+  quindi lo script riavvia in fastboot via software (syscall `reboot` con `bootloader`) e la scrive con fastboot.
+  userdata resta: sudo, contenitore e copie NVRAM sopravvivono.
+- Con il kernel nuovo l'eccezione del modem non riavvia più il telefono e si legge: assert in
+  `mcu/l1core/modem/mml1/mml1_rf/src/mmrf/mml1_rf_nvram.c` riga 365 (`para0=0x10`). Il modem si resetta da solo e riparte.
+- `strace` su init del contenitore: `ccci_fsd` legge senza errori tutti i file di `nvdata/md/NVRAM/CALIBRAT` e
+  `protect_f/md`. Mancava **`ccci_rpcd`**: con quello avviato, il modem resta in stato 4 senza eccezioni.
+- `logd` di Android non parte: i profili dei processi di Android 10 vogliono il cgroup `blkio`, che il kernel non ha.
+  Non serve: per leggere cosa fanno i servizi basta `strace`.
+- **Comandi AT su `/dev/ttyC0`** (script di prova `modem/at.py`): firmware `MOLY.LR12A.R3.MP.V107.5.P101`. Con
+  `AT+CFUN=1`: `+CPIN: READY` (SIM CoopVoce, senza PIN), `+CREG: 1` e `+CEREG: 1` (registrato), `+COPS: 0,0,"22210",7`
+  (LTE), `+CSQ: 7`. Arriva anche un SMS come `+CMT`, consegnato sulla porta seriale.
+- Prossimi passi: chiamata vocale (con quale RIL, e come passa l'audio), SMS con conferma (`AT+CNMA`) o salvati in SIM,
+  poi oFono o un ponte diretto verso Asterisk.
 
 ### 2026-11-17 — 📡 Il modem si avvia: stato «ready» con init di Android in un contenitore (Claude per @francesco)
 

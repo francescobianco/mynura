@@ -2,7 +2,7 @@
 # Aggiorna kernel e pacchetto del dispositivo di xiaomi-dandelion, senza riscrivere userdata.
 # Installa sul telefono il pacchetto linux compilato da port-xiaomi-dandelion.sh,
 # prende il boot.img rigenerato dal telefono, aggiunge il footer AVB sul PC
-# e lo scrive nella partizione boot dal telefono stesso. Prima salva la boot attuale.
+# riavvia in fastboot e scrive la partizione boot. Prima salva la boot attuale.
 # Serve sudo senza password sul telefono. Uso: kernel-update-xiaomi-dandelion.sh
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -48,9 +48,14 @@ python3 -I "$avbtool" add_hash_footer --image "$tmp/boot.img" \
 [[ "$(stat -c %s "$tmp/boot.img")" -eq "$boot_partition_size" ]] || die "boot.img con dimensione inattesa"
 cp "$tmp/boot.img" "$dossier/raw/backup/pmos-boot-$stamp-avb.img"
 
-step "4/4 Scrittura della partizione boot e riavvio"
-scp_ "$tmp/boot.img" "$phone:/tmp/boot-avb.img"
-ssh_ 'sudo dd if=/tmp/boot-avb.img of=/dev/disk/by-partlabel/boot bs=1M conv=fsync status=none && sync &&
-      sudo cmp /tmp/boot-avb.img /dev/disk/by-partlabel/boot && echo "boot scritta e verificata"'
-ssh_ 'sudo reboot' || true
+step "4/4 Fastboot: scrittura della partizione boot e riavvio"
+# Da telefono acceso la boot non si può scrivere: LK la protegge in scrittura
+# a livello di eMMC fino allo spegnimento. Si riavvia in fastboot via software.
+command -v fastboot >/dev/null || die "manca il comando: fastboot"
+ssh_ 'sync; sudo python3 -c "import ctypes; ctypes.CDLL(None).syscall(142, 0xfee1dead, 672274793, 0xA1B2C3D4, ctypes.c_char_p(b\"bootloader\"))"' || true
+for _ in $(seq 1 60); do fastboot devices 2>/dev/null | grep -q fastboot && break; sleep 2; done
+fastboot devices | grep -q fastboot || die "telefono non visto in fastboot: Vol Giù + Accensione, poi rilancia"
+[[ "$(fastboot getvar product 2>&1 | head -1)" == "product: dandelion" ]] || die "non è un dandelion"
+fastboot flash boot "$dossier/raw/backup/pmos-boot-$stamp-avb.img"
+fastboot reboot
 echo "Il telefono si riavvia. Backup della boot precedente: raw/backup/boot-prima-$stamp.img"
