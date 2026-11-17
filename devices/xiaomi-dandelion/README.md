@@ -133,7 +133,8 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 - [x] Decidere come fornire il dtb: entrambi i modi, come nello stock
 - [x] Chiamate vocali in uscita e in arrivo (risposta automatica `modem/answer.py`); mai riagganciare durante il passaggio al 3G (diario 2026-11-17)
 - [x] Voce di Piper dentro la chiamata (stream incall music, `modem/audio/mtkaudio`) — diario 2026-11-17
-- [ ] Ascoltare chi chiama (stream di ingresso della chiamata) per la conversazione con Claude
+- [x] Ascoltare chi chiama (stream di ingresso dalla rete, prova dell'eco riuscita)
+- [ ] Conversazione: trascrizione sul telefono, risposta di Claude, voce di Piper
 - [ ] Porta AT `ttyC0` piena quando nessuno la legge: serve un demone sempre in ascolto (RIL o oFono)
 
 ## Diario
@@ -149,8 +150,12 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
   «Ciao Francesco, sono Claude…».
 - MediaTek manda lo stream incall music al modem come «background sound» tramite `ccci_aud`. A 16 kHz mono lo
   stream ha latenza 512 ms e buffer 2048 byte; a 48 kHz stereo latenza 85 ms, come il mixer normale.
-- Il prossimo passo è la conversazione: catturare la voce di chi chiama (stream di ingresso della chiamata),
-  trascriverla, far rispondere Claude e generare la risposta con Piper durante la chiamata.
+- **Ascolto di chi chiama, prova dell'eco riuscita**: `iopen 80000040 3 16000 1` apre lo stream di ingresso dalla
+  rete (`AUDIO_DEVICE_IN_TELEPHONY_RX`, sorgente 3 = downlink, solo la voce di chi chiama), buffer 640 byte. `rec`
+  di 6 s: 192000 byte, picco 21735. Nei primi 2 s silenzio, poi il parlato di @francesco. Rimandata con
+  `mplay` sullo stream incall music, **@francesco risente la propria voce** dentro la chiamata. L'HAL scrive
+  `UL Touch Bounder, Maxinput=…` sullo stdout. La registrazione non va nel repository.
+- Prossimo passo: trascrivere la voce sul telefono, far rispondere Claude e dire la risposta con Piper.
 
 ### 2026-11-17 — 🔈 HAL audio MediaTek comandato da Nura: si apre la voce del modem (Claude per @francesco)
 
