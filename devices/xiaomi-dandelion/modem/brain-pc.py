@@ -30,7 +30,7 @@ SYSTEM = (
     'brevi, la prima molto corta: comincia a parlare appena la prima frase è pronta. Niente elenchi, simboli, '
     'emoji o markdown: tutto quello che scrivi viene letto ad alta voce. Le frasi di chi chiama arrivano da una '
     'trascrizione automatica e possono contenere errori: interpretale con buon senso e, se non capisci, chiedi '
-    'di ripetere. Ogni frase comincia con l\'ora attuale tra parentesi quadre: usala se serve, non ripeterla.'
+    'di ripetere. Ogni frase comincia con l\'ora attuale tra parentesi quadre: usala se serve, ma non scriverla mai tra parentesi nella risposta.'
 )
 WORKDIR = tempfile.mkdtemp(prefix='brain-')  # cartella neutra: niente CLAUDE.md del progetto
 CMD = ['claude', '-p', '--model', MODEL, '--tools', '', '--strict-mcp-config', '--setting-sources', '',
@@ -71,7 +71,8 @@ def answer(sess, qid, text, phone):
 
     def emit(s, final=False):
         nonlocal seq
-        s = s.strip()
+        # Claude a volte ripete l'ora che riceve tra parentesi quadre: non va letta
+        s = re.sub(r'^\s*\[[^\]]{0,40}\]\s*', '', s).strip()
         if s.startswith('🔊'):
             s = ''
         if s or final:
