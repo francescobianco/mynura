@@ -141,6 +141,24 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-17 — 🗣️ Pronuncia di Piper correggibile a voce, durante la chiamata (Claude per @francesco)
+
+- Prima prova vera della sessione operativa: parola d'ordine riconosciuta al primo colpo, scansione della rete
+  con 7 dispositivi trovati. Una seconda chiamata chiesta a voce non è partita: Claude non sapeva come
+  raggiungere il telefono (utente sbagliato, chiave SSH sconosciuta) e si è fermato invece di forzare. Ora la
+  sessione operativa riceve `modem/voice-ops.md`: accesso al telefono, comandi AT tramite `answer.py`
+  (`/tmp/answer.cmd`, risposte in `/tmp/answer.log`), seconda chiamata e conferenza (`AT+CHLD`), SMS, conferma
+  prima di spendere credito.
+- **Pronuncia** in un repository a parte, [francescobianco/piper](https://github.com/francescobianco/piper):
+  dizionario `config/pronuncia.tsv` (dal progetto speaker), velocità e pause in `config/lettura.json`, modulo
+  `pronuncia.py` che rilegge i file quando cambiano, `bin/pronuncia` per provare, `docs/PRONUNCIA.md` con le
+  regole trovate (doppie, accenti, domande, livelli di intervento).
+- `convo.py` sintetizza con `pronuncia.py` (sul telefono in `~/piper`); `brain-pc.py` copia sul telefono i file
+  del repository appena cambiano. Se in chiamata Francesco dice che una parola suona male, la sessione operativa
+  corregge il dizionario, prova, fa commit e push, e **la frase successiva usa già la correzione**. Prova:
+  voce aggiunta sul PC, sul telefono dopo meno di un secondo, frasi fisse rigenerate in automatico.
+- Con `length_scale` 1,25 (come nello speaker) la voce è più lenta e chiara; si può cambiare a voce.
+
 ### 2026-11-17 — 🔐 Sessione operativa di Claude Code al telefono, con parola d'ordine (Claude per @francesco)
 
 - Il fruscio è sparito con `mute 1` (microfono del telefono spento) e Piper passa ancora: lo stream incall

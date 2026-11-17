@@ -168,7 +168,33 @@ def answer(sess, qid, text, phone, seq0=0):
     emit(buf, final=True)
 
 
+PIPER_REPO = os.path.expanduser(CONF.get('piper_repo', '~/Develop/_/piper'))
+PIPER_FILES = ['pronuncia.py', 'config/pronuncia.tsv', 'config/lettura.json']
+
+
+def sync_pronuncia():
+    """Copia sul telefono (~/piper) i file di pronuncia quando cambiano nel repository: convo.py li rilegge."""
+    seen = {}
+    while True:
+        changed = []
+        for f in PIPER_FILES:
+            try:
+                m = os.path.getmtime(os.path.join(PIPER_REPO, f))
+            except OSError:
+                continue
+            if seen.get(f) != m:
+                seen[f] = m
+                changed.append(f)
+        if changed:
+            r = subprocess.run(['tar', '-C', PIPER_REPO, '-cf', '-'] + changed, capture_output=True)
+            ok = subprocess.run(SSH + ['mkdir -p ~/piper/config && tar -C ~/piper -xf -'], input=r.stdout,
+                                capture_output=True).returncode == 0
+            log(f'pronuncia copiata sul telefono ({ok}): {" ".join(changed)}')
+        time.sleep(1)
+
+
 def main():
+    threading.Thread(target=sync_pronuncia, daemon=True).start()
     log(f'ponte verso {PHONE}, chiacchiera {CHAT_MODEL}, operativo {OPS_MODEL}, cartella {WORKDIR}')
     phone = Phone()
     ready = Session()  # sessione già avviata per la prossima chiamata

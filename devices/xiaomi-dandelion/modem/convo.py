@@ -23,6 +23,9 @@ import wave
 
 HOME = '/home/francesco'
 VOICE = f'{HOME}/piper-voices/it_IT-paola-medium.onnx'
+# Pronuncia: copia del repository github.com/francescobianco/piper, tenuta aggiornata da brain-pc.py.
+# Dizionario e impostazioni si rileggono a ogni frase: una correzione vale dalla frase successiva.
+PRONUNCIA = f'{HOME}/piper'
 VOSK_MODEL = f'{HOME}/stt/vosk-model-small-it-0.22'
 CT = '/var/lib/miui-ct/data/local/tmp'  # la stessa cartella vista da mtkaudio come /data/local/tmp
 LOG, CMD, CTL = '/tmp/mtkaudio.log', '/tmp/mtkaudio.cmd', '/tmp/convo.cmd'
@@ -61,10 +64,10 @@ def mtk(cmd, wait=None, timeout=60):
 
 
 def render(text, raw):
-    """Frase -> PCM 16 bit mono 16 kHz, con il modello di Piper già caricato."""
+    """Frase -> PCM 16 bit mono 16 kHz, con il modello di Piper già caricato e il dizionario di pronuncia."""
     wav = raw + '.wav'
     with wave.open(wav, 'wb') as w:
-        voice.synthesize_wav(text, w)
+        pron.sintetizza(voice, text, w)
     subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', wav, '-ar', '16000', '-ac', '1', '-f', 's16le', raw])
     os.unlink(wav)
 
@@ -188,17 +191,40 @@ def conversation():
     log('conversazione finita')
 
 
+def render_fixed():
+    render(GREETING, f'{CT}/saluto.raw')
+    render('Ci sei? Non ti sento.', f'{CT}/cisei.raw')
+
+
+def watch_pronuncia():
+    """Se dizionario o impostazioni cambiano, rigenera subito le frasi fisse (pronte per la prossima chiamata)."""
+    def stamp():
+        return [os.path.getmtime(f) if os.path.exists(f) else 0 for f in (pron.tsv, pron.json)]
+    last = stamp()
+    while True:
+        time.sleep(2)
+        now = stamp()
+        if now != last and not active.is_set():
+            last = now
+            render_fixed()
+            log('pronuncia aggiornata: frasi fisse rigenerate')
+
+
 def main():
-    global voice, vosk, vosk_model
+    global voice, vosk, vosk_model, pron
     t = time.time()
+    import sys
+    sys.path.insert(0, PRONUNCIA)
+    from pronuncia import Pronuncia
+    pron = Pronuncia()
     from piper import PiperVoice
     import vosk
     vosk.SetLogLevel(-1)
     voice = PiperVoice.load(VOICE)
     vosk_model = vosk.Model(VOSK_MODEL)
     # Le frasi fisse si preparano subito, così il saluto parte appena si risponde
-    render(GREETING, f'{CT}/saluto.raw')
-    render('Ci sei? Non ti sento.', f'{CT}/cisei.raw')
+    render_fixed()
+    threading.Thread(target=watch_pronuncia, daemon=True).start()
     for p in (Q, A):
         open(p, 'a').close()
         os.chmod(p, 0o666)

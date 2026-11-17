@@ -33,6 +33,22 @@ dal numero autorizzato). Va tenuta senza segreti: niente parola d'ordine, numeri
   Ctrl-Z: `printf 'testo\032\n' | sudo tee /tmp/answer.cmd`. Esito `+CMGS: <n>` nel log.
 - Gli SMS ricevuti restano sulla SIM (`+CMTI: "SM", <indice>`): leggili con `AT+CMGF=1` e `AT+CMGR=<indice>`.
 
+## Pronuncia della tua voce
+
+- La tua voce è Piper (`it_IT-paola-medium`). Le correzioni di pronuncia stanno nel repository
+  `~/Develop/_/piper` (github.com/francescobianco/piper): `config/pronuncia.tsv` (una riga
+  `parola<TAB>grafia da leggere`, parola intera, senza distinguere maiuscole) e `config/lettura.json`
+  (`length_scale`: più alto è più lento; `sentence_silence`).
+- Quando Francesco dice che pronunci male qualcosa e spiega come dovrebbe suonare:
+  1. scrivi la grafia: accenti per le vocali aperte o toniche (`còpp-pia`), trattini e doppie per allungare,
+     sigle con le lettere separate come si leggono in italiano;
+  2. prova con `~/Develop/_/piper/bin/pronuncia "frase di prova"` (testo corretto e fonemi);
+  3. commit e push nel repository piper, con un messaggio che dice la parola e il perché;
+  4. il ponte copia i file sul telefono entro un secondo: **la frase successiva usa già la correzione**. Dillo
+     usando la parola corretta, così Francesco la sente subito.
+- Le regole trovate finora (doppie, accenti, domande) sono in `~/Develop/_/piper/docs/PRONUNCIA.md`: aggiornalo
+  se impari qualcosa di nuovo.
+
 ## Regole
 
 - Chiamate e SMS **consumano credito**: prima di comporre o inviare ripeti numero e testo e chiedi conferma.
