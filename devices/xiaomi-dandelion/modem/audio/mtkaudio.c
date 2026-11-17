@@ -17,6 +17,10 @@
  *                       lo manda al modem come background sound, lo sente chi è in linea
  *   mplay <file.raw>    scrive PCM 16 bit sullo stream incall music
  *   mclose              chiude lo stream incall music
+ *   iopen <dev> <sorgente> <rate> [canali]  apre lo stream di ingresso (dev in esadecimale); per la voce
+ *                       di chi chiama: 80000040 (rete) con sorgente 3 (downlink) o 4 (chiamata)
+ *   rec <file.raw> <s>  registra PCM 16 bit dallo stream di ingresso per <s> secondi
+ *   iclose              chiude lo stream di ingresso
  *   patch <src> <sink>  create_audio_patch da dispositivo a dispositivo (tipi in esadecimale), come fa
  *                       Android 10 in chiamata: 80000040 (rete) -> 2 (altoparlante), 80000004 (microfono) -> 10000 (rete)
  *   mixpatch <sink>     create_audio_patch dallo stream di uscita aperto (handle 13) a un dispositivo
@@ -42,6 +46,7 @@ unsigned long strtoul(const char *, char **, int);
 double strtod(const char *, char **);
 int open(const char *, int, ...);
 ssize_t read(int, void *, size_t);
+ssize_t write(int, const void *, size_t);
 int close(int);
 unsigned int sleep(unsigned int);
 int usleep(unsigned int);
@@ -105,6 +110,11 @@ struct audio_stream_out {
 	int (*set_volume)(struct audio_stream_out *, float, float);
 	ssize_t (*write)(struct audio_stream_out *, const void *, size_t);
 };
+struct audio_stream_in {
+	struct audio_stream common;
+	int (*set_gain)(struct audio_stream_in *, float);
+	ssize_t (*read)(struct audio_stream_in *, void *, size_t);
+};
 struct audio_gain_config {
 	int index;
 	uint32_t mode, channel_mask;
@@ -143,8 +153,8 @@ struct audio_hw_device {
 				  const char *address);
 	void (*close_output_stream)(struct audio_hw_device *, struct audio_stream_out *);
 	int (*open_input_stream)(struct audio_hw_device *, int, uint32_t, struct audio_config *,
-				 void **, uint32_t, const char *, uint32_t);
-	void (*close_input_stream)(struct audio_hw_device *, void *);
+				 struct audio_stream_in **, uint32_t flags, const char *address, uint32_t source);
+	void (*close_input_stream)(struct audio_hw_device *, struct audio_stream_in *);
 	int (*get_microphones)(const struct audio_hw_device *, void *, size_t *);
 	int (*dump)(const struct audio_hw_device *, int);
 	int (*set_master_mute)(struct audio_hw_device *, bool);
@@ -182,6 +192,7 @@ __attribute__((naked, noreturn)) void _start(void)
 /* ---- shell ---- */
 static struct audio_hw_device *dev;
 static struct audio_stream_out *out, *music;
+static struct audio_stream_in *in;
 static int patches[16], npatches;
 
 static void keep_patch(int r, int h)
@@ -340,6 +351,51 @@ int main(int argc, char **argv, char **envp)
 			if (music) dev->close_output_stream(dev, music);
 			music = 0;
 			printf("chiuso\n");
+		} else if (!strncmp(line, "iopen ", 6)) {
+			char *p = a;
+			uint32_t d = strtoul(p, &p, 16), src = strtoul(p, &p, 10);
+			uint32_t rate = strtoul(p, &p, 10), ch = strtoul(p, &p, 10);
+			struct audio_config c = { 0 };
+			c.sample_rate = rate ? rate : 16000;
+			c.channel_mask = ch == 2 ? 0xc : 0x10; /* IN_STEREO / IN_MONO */
+			c.format = 0x1;
+			if (in) { dev->close_input_stream(dev, in); in = 0; }
+			r = dev->open_input_stream(dev, 20, d, &c, &in, 0, "", src);
+			printf("open_input_stream(%x, sorgente %u): %d rate %u ch %x fmt %x\n", d, src, r,
+			       c.sample_rate, c.channel_mask, c.format);
+			if (r) in = 0;
+			else printf("buffer %u byte\n", (unsigned)in->common.get_buffer_size(&in->common));
+		} else if (!strncmp(line, "rec ", 4)) {
+			char *p = a, *path = a;
+			while (*p && *p != ' ') p++;
+			if (*p) *p++ = 0;
+			double secs = strtod(p, 0);
+			if (!in) { printf("rec: stream di ingresso chiuso\n"); continue; }
+			int fd = open(path, 0x241 /* O_WRONLY|O_CREAT|O_TRUNC */, 0644);
+			static char buf[8192];
+			size_t bs = in->common.get_buffer_size(&in->common);
+			if (bs > sizeof buf) bs = sizeof buf;
+			unsigned rate = in->common.get_sample_rate(&in->common);
+			unsigned chm = in->common.get_channels(&in->common);
+			size_t want = (size_t)(secs * rate * 2 * (chm == 0xc ? 2 : 1)), tot = 0;
+			long peak = 0;
+			while (tot < want) {
+				ssize_t k = in->read(in, buf, bs);
+				if (k <= 0) { printf("read: %d\n", (int)k); break; }
+				for (ssize_t i = 0; i + 1 < k; i += 2) {
+					long v = (short)((unsigned char)buf[i] | (buf[i + 1] << 8));
+					if (v < 0) v = -v;
+					if (v > peak) peak = v;
+				}
+				if (fd >= 0) write(fd, buf, k);
+				tot += k;
+			}
+			if (fd >= 0) close(fd);
+			printf("rec: %u byte, rate %u, picco %ld\n", (unsigned)tot, rate, peak);
+		} else if (!strncmp(line, "iclose", 6)) {
+			if (in) dev->close_input_stream(dev, in);
+			in = 0;
+			printf("chiuso\n");
 		} else if (!strncmp(line, "sleep ", 6)) {
 			usleep((unsigned)(strtod(a, 0) * 1e6));
 			printf("ok\n");
@@ -349,6 +405,7 @@ int main(int argc, char **argv, char **envp)
 			printf("comando sconosciuto: %s\n", line);
 		}
 	}
+	if (in) dev->close_input_stream(dev, in);
 	if (music) dev->close_output_stream(dev, music);
 	if (out) dev->close_output_stream(dev, out);
 	dev->common.close(&dev->common);
