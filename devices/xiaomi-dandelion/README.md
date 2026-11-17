@@ -131,7 +131,7 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 - [x] Capire se LK accetta `fastboot boot` da RAM su questo telefono: **no**. Riceve l'immagine ma va in panic, anche con il boot.img stock (2026-11-09)
 - [ ] Provare l'avvio scrivendo l'immagine nella partizione `boot`
 - [x] Decidere come fornire il dtb: entrambi i modi, come nello stock
-- [x] Chiamate vocali in uscita: squillano e vengono risposte; mai riagganciare durante il passaggio al 3G (diario 2026-11-17)
+- [x] Chiamate vocali in uscita e in arrivo (risposta automatica `modem/answer.py`); mai riagganciare durante il passaggio al 3G (diario 2026-11-17)
 - [ ] Audio delle chiamate (microfono/altoparlante o voce di Piper): passa dal DSP del modem, serve l'audio MediaTek
 - [ ] Porta AT `ttyC0` piena quando nessuno la legge: serve un demone sempre in ascolto (RIL o oFono)
 
@@ -174,6 +174,11 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 - **Regola**: non riagganciare durante il passaggio al 3G, cioè tra `+ECPI: 1,130` e lo squillo (`+ECPI: 1,2`).
   Un `ATH` in quella fase blocca le chiamate fino al riavvio del modem, e `AT+CFUN=4`/`1` non basta.
   Lo script di prova è `modem/call.py` (il numero si passa come argomento).
+- **Risposta automatica** con `modem/answer.py`: tiene `/dev/ttyC0` sempre aperta, risponde con `ATA` a
+  `+CRING: VOICE`, resta in linea 8 s e chiude. Prima prova con @francesco che chiama: `+CLIP` (numero),
+  `+CRING: VOICE`, `ATA`, `+ECPI: 1,0` (chiamata in arrivo), `4`, `132`, `6` connessa **nello stesso secondo**,
+  poi `ATH` e `133` causa `16`. Con `+EAIC: 3` (modalità di partenza) il modem **non chiede approvazione**: niente
+  `AT+EAIC` da mandare. Da qui in avanti le prove si fanno così: chiama @francesco e risponde il telefono.
 
 ### 2026-11-17 — 🎉 SIM letta e telefono registrato in 4G sotto Nura (Claude per @francesco)
 
