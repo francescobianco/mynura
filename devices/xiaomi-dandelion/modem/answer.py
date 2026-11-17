@@ -4,15 +4,25 @@
 # Mentre gira, comandi AT a mano: echo 'AT+CSQ' > /tmp/answer.cmd (le risposte vanno nel log).
 # Se gira mtkaudio (modem/audio), a chiamata connessa accende l'audio di chiamata e a fine chiamata lo spegne,
 # scrivendo i comandi in /tmp/mtkaudio.cmd.
-# Modalità: "convo" (predefinita) lancia convo.py, la conversazione con Claude; "eco" fa la prova dell'eco.
+# Modalità: "convo" (predefinita) avvia la conversazione con Claude (convo.py, da lanciare a parte);
+# "eco" fa la prova dell'eco.
 # Uso: sudo python3 answer.py [/dev/ttyC0] [secondi_massimi_in_linea] [convo|eco]
-import os, sys, time, tty, termios, select, re, subprocess, signal
+import os, sys, time, tty, termios, select, re
 
 dev = sys.argv[1] if len(sys.argv) > 1 else '/dev/ttyC0'
 hold = float(sys.argv[2]) if len(sys.argv) > 2 else 8
 MODE = sys.argv[3] if len(sys.argv) > 3 else 'convo'
-CONVO = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'convo.py')
-convo = None
+CONVO_FIFO = '/tmp/convo.cmd'  # convo.py, servizio sempre acceso con Piper e Vosk già caricati
+
+
+def convo_ctl(cmd):
+    try:
+        cfd_ = os.open(CONVO_FIFO, os.O_WRONLY | os.O_NONBLOCK)
+        os.write(cfd_, (cmd + '\n').encode())
+        os.close(cfd_)
+        log(f'convo: {cmd}')
+    except OSError as e:
+        log(f'convo: {e} (convo.py non è in esecuzione?)')
 FIFO = '/tmp/answer.cmd'
 AUDIO_FIFO = '/tmp/mtkaudio.cmd'
 # Come Android 10 in chiamata: modalità "in chiamata" (2), poi patch dallo stream di uscita (mix) all'altoparlante (2).
@@ -93,19 +103,13 @@ def handle(line):
             if MODE == 'eco':
                 audio(AUDIO_ON)
             else:
-                global convo
                 audio(VOICE_ON)
-                convo = subprocess.Popen([sys.executable, '-u', CONVO, str(int(time.time()))],
-                                         stdout=sys.stdout, stderr=sys.stdout, start_new_session=True)
+                convo_ctl(f'start {int(time.time())}')
         elif msg == 133:
             log('*** chiamata chiusa')
             if state['ata_sent']:
-                if convo:
-                    try:
-                        os.killpg(convo.pid, signal.SIGTERM)
-                    except ProcessLookupError:
-                        pass
-                    convo = None
+                if MODE != 'eco':
+                    convo_ctl('stop')
                 audio(AUDIO_OFF)
             reset()
         return

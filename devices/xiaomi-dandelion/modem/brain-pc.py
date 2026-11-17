@@ -8,6 +8,7 @@ e la riscrive in /tmp/brain.a come {"id", "text"}.
 Uso sul PC: python3 brain-pc.py [utente@172.16.42.1] [modello]
 """
 import json
+import time
 import os
 import subprocess
 import sys
@@ -39,7 +40,9 @@ def ask(call, text):
         sessions[call] = str(uuid.uuid4())
         cmd += ['--session-id', sessions[call]]
     try:
-        out = subprocess.run(cmd + [text], cwd=WORKDIR, capture_output=True, text=True, timeout=40).stdout
+        # L'ora la sa il PC: la si aggiunge alla frase, così Claude può rispondere a "che ore sono"
+        now = time.strftime('%H:%M di %A %d %B %Y')
+        out = subprocess.run(cmd + [f'[Adesso sono le {now}.] {text}'], cwd=WORKDIR, capture_output=True, text=True, timeout=40).stdout
     except subprocess.TimeoutExpired:
         return 'Scusa, ci sto mettendo troppo. Puoi ripetere?'
     # Le istruzioni globali dell'utente aggiungono una riga 🔊: al telefono non serve
