@@ -141,6 +141,28 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-17 — ✋ Interruzioni: chi chiama può parlare sopra Piper, e un suono dice «tocca a te» (Claude per @francesco)
+
+- Richiesta di @francesco: gestire la concorrenza della conversazione. Se chi chiama parla mentre Piper parla,
+  Piper deve fermarsi e cambiare strada; alla fine di ogni risposta un suono come l'attacco del progetto speaker.
+- `mtkaudio` ora ha due thread:
+  - **ascolto continuo** (`cstart <file>` / `cstop`): legge senza sosta lo stream di ingresso della chiamata e lo
+    accoda a un file;
+  - **riproduzione in coda e interrompibile**: `mplay` mette in coda e torna subito, `mstop` incrementa una
+    «generazione» e il player abbandona tutto quello che è più vecchio, svuota lo stream con `standby` dal suo stesso
+    thread (512 ms di buffer) e stampa `play: interrotto <byte>`. Coda a un produttore e un consumatore, senza mutex.
+- `convo.py` riscritto attorno all'ascolto continuo: un thread misura il volume a frame da 20 ms (soglia RMS 700,
+  inizio frase dopo 120 ms, fine dopo 700 ms di pausa, 300 ms di audio precedente passati comunque a Vosk), un
+  thread per frase trascrive con Vosk. Se chi chiama parla per 300 ms mentre Piper parla: `mstop`, il resto della
+  risposta si scarta, il ponte riceve `{"type": "cancel"}` e la frase nuova arriva a Claude con quello che Piper
+  aveva fatto in tempo a dire (`interrupted`), così la conversazione cambia strada.
+- `brain-pc.py` legge la coda in un thread: le cancellazioni valgono subito, la risposta interrotta si consuma
+  senza inviarla.
+- Suono di fine: `modem/assets/genera-suoni.sh` genera `fine.wav`/`fine.raw` con la stessa formula della kalimba
+  di speaker, due note discendenti (re 587 Hz, poi la 440 Hz). Si suona alla fine di ogni risposta non interrotta.
+- Fuori da una chiamata la coda funziona ma le scritture non sono in tempo reale (il modem non consuma l'audio):
+  l'interruzione si prova solo in chiamata.
+
 ### 2026-11-17 — 🔤 Correzione della pronuncia a voce con l'azione [[pronuncia]] (Claude per @francesco)
 
 - In chiamata @francesco ha chiesto di pronunciare «Piper» all'inglese. La sessione bloccata ha risposto che non

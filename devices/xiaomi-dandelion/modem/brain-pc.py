@@ -22,6 +22,7 @@ Uso sul PC: python3 brain-pc.py [utente@172.16.42.1] [modello_chiacchiera] [mode
 import difflib
 import json
 import os
+import queue
 import re
 import subprocess
 import sys
@@ -83,6 +84,7 @@ OPS_NOTES = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'voice-ops.
 BASE = ['claude', '-p', '--strict-mcp-config', '--setting-sources', '', '--system-prompt-snapshot', 'off',
         '--input-format', 'stream-json',
         '--output-format', 'stream-json', '--include-partial-messages', '--verbose']
+CANCELLED = set()  # id delle risposte interrotte da chi chiama
 SENTENCE = re.compile(r'(.+?[.!?…:;])\s+', re.S)  # fine frase: punteggiatura seguita da uno spazio
 TAG = re.compile(r'\[\[\s*(.+?)\s*\]\]', re.S)  # azione sul telefono: [[riaggancia]], [[chiama +39...]]
 
@@ -187,6 +189,8 @@ def answer(sess, qid, text, phone, seq0=0):
         s = re.sub(r'^\s*\[[^\]]{0,40}\]\s*', '', s.strip()).strip()  # l'ora tra parentesi non va letta
         if s.startswith('🔊'):
             s = ''
+        if qid in CANCELLED:  # chi chiama ha interrotto: il resto della risposta non serve più
+            return
         if s or final:
             phone.send({'id': qid, 'seq': seq, 'text': s, 'final': final})
             log(f'-> [{seq}{"F" if final else ""} {time.time() - t:.2f} s] {s}')
@@ -194,6 +198,8 @@ def answer(sess, qid, text, phone, seq0=0):
 
     def act(cmd):
         nonlocal seq
+        if qid in CANCELLED:
+            return
         action, refusal = parse_action(cmd, sess.unlocked, getattr(sess, 'caller_ok', False))
         if action and action['type'] == 'pronuncia':
             set_pronuncia(action['parola'], action['grafia'])  # sul PC; il telefono riceve il dizionario subito
@@ -313,11 +319,23 @@ def main():
     calls = {}
     p = subprocess.Popen(SSH + ['touch /tmp/brain.q /tmp/brain.a; tail -n0 -F /tmp/brain.q'],
                          stdout=subprocess.PIPE, text=True)
-    for line in p.stdout:
-        try:
-            q = json.loads(line)
-        except ValueError:
-            continue
+    questions = queue.Queue()
+
+    def reader():
+        # Le cancellazioni valgono subito, anche mentre una risposta è in corso; le domande vanno in coda
+        for line in p.stdout:
+            try:
+                q = json.loads(line)
+            except ValueError:
+                continue
+            if q.get('type') == 'cancel':
+                CANCELLED.add(q.get('id'))
+                log(f'   interrotto da chi chiama: {q.get("id")}')
+            else:
+                questions.put(q)
+    threading.Thread(target=reader, daemon=True).start()
+    while True:
+        q = questions.get()
         call = q.get('call', 'x')
         if call not in calls:
             for old in calls.values():  # una chiamata alla volta: le sessioni vecchie si chiudono
@@ -326,6 +344,10 @@ def main():
             ready = Session()
         sess = calls[call]
         found, text = find_passphrase(q['text'])
+        if q.get('interrupted'):
+            # Piper era stata interrotta: Claude sa fin dove era arrivata e che il discorso può cambiare
+            text = (f'(Il sistema dice: mi hai interrotto mentre rispondevo; avevo detto solo: '
+                    f'«{q["interrupted"]}». Riprendi dal punto giusto o cambia argomento se serve.) {text}')
         log(f'<- {text}')
         caller_ok = re.sub(r'\D', '', q.get('caller', ''))[-10:] in CALLERS
         sess.caller_ok = caller_ok

@@ -1,15 +1,20 @@
 """Conversazione in chiamata: ascolta chi chiama, trascrive, chiede la risposta, la dice con Piper.
 
-Servizio sempre acceso: carica Piper e Vosk una volta sola (Piper impiega 12 s a caricare il modello e circa
-1 s a sintetizzare una frase) e prepara le frasi fisse. Aspetta i comandi di answer.py su /tmp/convo.cmd:
-  start <id_chiamata> <numero>   a chiamata connessa: la voce del modem e gli stream sono già pronti, si saluta subito
-  stop                  a fine chiamata
-Per rispondere in fretta:
-  - Vosk trascrive **mentre** chi chiama parla: mtkaudio (recvad) scrive l'audio frame per frame e qui lo si
-    legge man mano che il file cresce; a fine frase il testo è già pronto;
-  - la risposta arriva da brain-pc.py una frase alla volta: la prima si sintetizza e si suona mentre Claude
-    scrive le altre, e la sintesi della frase successiva avviene mentre si suona la precedente.
-Comanda mtkaudio via /tmp/mtkaudio.cmd e ne legge le risposte da /tmp/mtkaudio.log.
+Servizio sempre acceso: carica Piper, Vosk e le frasi fisse una volta sola, poi aspetta i comandi di answer.py
+su /tmp/convo.cmd:
+  start <id_chiamata> <numero>   a chiamata connessa (voce del modem e stream già pronti): si saluta subito
+  stop                           a fine chiamata
+
+Ascolto continuo e interruzioni:
+  - mtkaudio registra la chiamata senza sosta (cstart) in un file che cresce; qui un thread lo legge a frame da
+    20 ms e decide quando chi chiama parla (soglia sul volume);
+  - se chi chiama parla **mentre Piper parla** per almeno BARGE_MS, Piper si ferma (mstop), il resto della
+    risposta si scarta e il ponte viene avvisato; la frase nuova arriva a Claude insieme a quello che Piper aveva
+    fatto in tempo a dire, così la conversazione cambia strada;
+  - un secondo thread trascrive con Vosk mentre si parla: a fine frase il testo è già pronto.
+La risposta arriva da brain-pc.py una frase alla volta: si sintetizza e si mette in coda subito (la coda di
+mtkaudio suona senza pause), e alla fine si suona il segnale "tocca a te" (assets/fine.raw, kalimba come
+l'attacco del progetto speaker). Le azioni ([[riaggancia]], ...) si eseguono al loro posto.
 
 Uso: sudo python3 convo.py
 """
@@ -17,6 +22,7 @@ import json
 import os
 import queue
 import re
+import struct
 import subprocess
 import threading
 import time
@@ -24,49 +30,62 @@ import wave
 
 HOME = '/home/francesco'
 VOICE = f'{HOME}/piper-voices/it_IT-paola-medium.onnx'
-# Pronuncia: copia del repository github.com/francescobianco/piper, tenuta aggiornata da brain-pc.py.
-# Dizionario e impostazioni si rileggono a ogni frase: una correzione vale dalla frase successiva.
-PRONUNCIA = f'{HOME}/piper'
+PRONUNCIA = f'{HOME}/piper'  # copia del repository piper, tenuta aggiornata da brain-pc.py
 VOSK_MODEL = f'{HOME}/stt/vosk-model-small-it-0.22'
 CT = '/var/lib/miui-ct/data/local/tmp'  # la stessa cartella vista da mtkaudio come /data/local/tmp
 LOG, CMD, CTL = '/tmp/mtkaudio.log', '/tmp/mtkaudio.cmd', '/tmp/convo.cmd'
 Q, A = '/tmp/brain.q', '/tmp/brain.a'
-GREETING = 'Ciao, sono Piper. Dimmi pure.'
 AT_FIFO = '/tmp/answer.cmd'  # comandi AT, inviati da answer.py che tiene aperta la porta del modem
-SILENCE_MS = 700   # pausa che chiude la frase di chi chiama
-THRESHOLD = 700    # soglia RMS del parlato
+CAPTURE = 'cattura.raw'
+GREETING = 'Ciao, sono Piper. Dimmi pure.'
 
-active = threading.Event()
-call_id = ['']
-caller = ['']
-mtk_lock = threading.Lock()
+FRAME = 640          # 20 ms a 16 kHz mono, 16 bit
+THRESHOLD = 700      # RMS del parlato
+START_MS = 120       # parlato continuo per dire che una frase è iniziata
+SILENCE_MS = 700     # pausa che chiude la frase
+BARGE_MS = 300       # parlato continuo mentre Piper parla per interromperla
+PREROLL_MS = 300     # audio prima dell'inizio frase passato comunque a Vosk (prime sillabe)
+QUIET_S = 12         # dopo tanto silenzio, una volta sola: "Ci sei?"
+
+active = threading.Event()      # c'è una chiamata
+speaking = threading.Event()    # Piper sta parlando
+barge = threading.Event()       # chi chiama ha preso la parola mentre Piper parlava
+utterances = queue.Queue()      # frasi trascritte di chi chiama
+call = {'id': '', 'caller': ''}
 
 
 def log(msg):
     print(f'{time.strftime("%H:%M:%S")} [convo] {msg}', flush=True)
 
 
-def mtk(cmd, wait=None, timeout=60):
-    """Manda un comando a mtkaudio e, se richiesto, aspetta la riga di log che inizia con `wait`."""
-    with mtk_lock:
-        pos = os.path.getsize(LOG)
-        with open(CMD, 'w') as f:
-            f.write(cmd + '\n')
-        if not wait:
-            return ''
-        end = time.time() + timeout
-        while time.time() < end:
-            with open(LOG, errors='replace') as f:
-                f.seek(pos)
-                for line in f.read().splitlines():
-                    if line.startswith(wait):
-                        return line
-            time.sleep(0.03)
-        return ''
+def mtk(cmd):
+    """Manda un comando a mtkaudio senza aspettare (una write piccola su FIFO è atomica: più thread possono usarla)."""
+    with open(CMD, 'w') as f:
+        f.write(cmd + '\n')
+
+
+def log_lines_since(pos):
+    """Righe nuove del log di mtkaudio dalla posizione pos; restituisce (righe complete, nuova posizione)."""
+    with open(LOG, 'rb') as f:
+        f.seek(pos)
+        data = f.read()
+    end = data.rfind(b'\n') + 1
+    return data[:end].decode(errors='replace').splitlines(), pos + end
+
+
+def wait_log(prefix, pos, timeout=30):
+    end = time.time() + timeout
+    while time.time() < end:
+        lines, pos = log_lines_since(pos)
+        for line in lines:
+            if line.startswith(prefix):
+                return line
+        time.sleep(0.03)
+    return ''
 
 
 def render(text, raw):
-    """Frase -> PCM 16 bit mono 16 kHz, con il modello di Piper già caricato e il dizionario di pronuncia."""
+    """Frase -> PCM 16 bit mono 16 kHz, con Piper già caricato e il dizionario di pronuncia."""
     wav = raw + '.wav'
     with wave.open(wav, 'wb') as w:
         pron.sintetizza(voice, text, w)
@@ -74,12 +93,79 @@ def render(text, raw):
     os.unlink(wav)
 
 
-def play(name):
-    mtk(f'mplay /data/local/tmp/{name}', 'play:', timeout=120)
+def render_fixed():
+    render(GREETING, f'{CT}/saluto.raw')
+    render('Ci sei? Non ti sento.', f'{CT}/cisei.raw')
 
 
+# ---------------------------------------------------------------- ascolto
+def listener():
+    """Legge la registrazione continua, decide quando chi chiama parla, interrompe Piper, passa l'audio a Vosk."""
+    path = f'{CT}/{CAPTURE}'
+    while not os.path.exists(path) and active.is_set():
+        time.sleep(0.05)
+    f = open(path, 'rb')
+    pre = []                  # ultimi frame prima dell'inizio frase
+    in_speech, loud, quiet = False, 0, 0
+    to_stt = None
+    while active.is_set():
+        data = f.read(FRAME)
+        if len(data) < FRAME:
+            if data:
+                f.seek(-len(data), 1)
+            time.sleep(0.01)
+            continue
+        n = FRAME // 2
+        samples = struct.unpack(f'<{n}h', data)
+        rms2 = sum(x * x for x in samples) / n
+        voiced = rms2 >= THRESHOLD * THRESHOLD
+        loud = loud + 20 if voiced else 0
+        if speaking.is_set() and loud >= BARGE_MS and not barge.is_set():
+            barge.set()
+            mtk('mstop')
+            log('interruzione: chi chiama parla mentre Piper parla')
+        if not in_speech:
+            pre.append(data)
+            pre = pre[-(PREROLL_MS // 20):]
+            if loud >= START_MS:
+                in_speech, quiet = True, 0
+                to_stt = queue.Queue()
+                threading.Thread(target=transcriber, args=(to_stt,), daemon=True).start()
+                for p in pre:
+                    to_stt.put(p)
+                pre = []
+            continue
+        to_stt.put(data)
+        quiet = 0 if voiced else quiet + 20
+        if quiet >= SILENCE_MS:
+            in_speech = False
+            to_stt.put(None)  # fine frase: il trascrittore consegna il testo
+    if in_speech and to_stt:
+        to_stt.put(None)
+    f.close()
+
+
+def transcriber(frames):
+    """Una frase: Vosk mentre arriva l'audio, il testo finale in `utterances` appena la frase si chiude."""
+    rec = vosk.KaldiRecognizer(vosk_model, 16000)
+    chunk, total = b'', 0
+    while (fr := frames.get()) is not None:
+        chunk += fr
+        total += len(fr)
+        if len(chunk) >= FRAME * 10:  # Vosk lavora meglio a blocchi da 200 ms
+            rec.AcceptWaveform(chunk)
+            chunk = b''
+    t = time.time()
+    if chunk:
+        rec.AcceptWaveform(chunk)
+    text = json.loads(rec.FinalResult())['text']
+    if total >= 16000 and text.strip():  # almeno mezzo secondo di audio (16 bit)
+        log(f'trascrizione pronta {time.time() - t:.2f} s dopo la pausa: {text}')
+        utterances.put(text)
+
+
+# ---------------------------------------------------------------- azioni
 def at(*cmds, pause=0.0):
-    """Manda comandi AT tramite answer.py (che tiene la porta del modem)."""
     for c in cmds:
         fd = os.open(AT_FIFO, os.O_WRONLY | os.O_NONBLOCK)
         os.write(fd, (c + '\n').encode())
@@ -90,18 +176,17 @@ def at(*cmds, pause=0.0):
 
 def execute(action):
     """Azione arrivata dal ponte, nel punto della risposta in cui Claude l'ha scritta. Controllo anche qui."""
-    kind = action.get('type')
-    num = str(action.get('number', ''))
+    kind, num = action.get('type'), str(action.get('number', ''))
     log(f'azione: {action}')
     if kind == 'hangup':
         at('ATH')
-        active.clear()  # answer.py vede la chiamata chiusa e manda stop; intanto si smette di ascoltare
+        active.clear()
     elif kind == 'dial' and re.fullmatch(r'\+?\d{6,15}', num):
         at(f'ATD{num};')
     elif kind == 'sms' and re.fullmatch(r'\+?\d{6,15}', num):
         text = ''.join(c for c in str(action.get('text', ''))[:160] if c.isprintable())
         at('AT+CMGF=1', 'AT+CSCS="GSM"', pause=0.3)
-        at(f'AT+CMGS="{num}"', pause=1.0)  # il modem risponde con ">" e aspetta il testo
+        at(f'AT+CMGS="{num}"', pause=1.0)
         at(text + '\x1a')
     elif kind == 'at' and re.fullmatch(r'AT[A-Z0-9+?=,"#*.:;_ -]{0,60}', str(action.get('command', '')), re.I):
         at(action['command'])
@@ -109,132 +194,161 @@ def execute(action):
         log(f'azione scartata: {action}')
 
 
-def speak(items):
-    """Sintetizza e suona le frasi man mano che arrivano (la sintesi della successiva va in parallelo) ed esegue
-    le azioni nel loro punto, dopo che le frasi precedenti sono state dette."""
-    ready = queue.Queue()
-
-    def synth():
-        for i, s in enumerate(items):
-            if not active.is_set():
-                break
-            if isinstance(s, dict):
-                ready.put(s)
-                continue
-            name = f'say-{i % 8}.raw'
-            t = time.time()
-            render(s, f'{CT}/{name}')
-            log(f'piper {time.time() - t:.1f} s: {s}')
-            ready.put(name)
-        ready.put(None)
-
-    threading.Thread(target=synth, daemon=True).start()
-    while (name := ready.get()) is not None:
-        if isinstance(name, dict):
-            execute(name)
-        elif active.is_set():
-            play(name)
-
-
-def listen():
-    """Registra fino alla pausa e trascrive in contemporanea. Restituisce il testo (anche vuoto)."""
-    raw = f'{CT}/ascolto.raw'
+# ---------------------------------------------------------------- parlare
+def play_files(names):
+    """Suona dei file già pronti (frasi fisse, segnale). Restituisce False se chi chiama ha interrotto."""
+    pos = os.path.getsize(LOG)
+    barge.clear()
+    speaking.set()
+    for n in names:
+        mtk(f'mplay /data/local/tmp/{n}')
+    done = 0
     try:
-        os.unlink(raw)
+        end = time.time() + 60
+        while done < len(names) and active.is_set() and time.time() < end:
+            lines, pos = log_lines_since(pos)
+            for line in lines:
+                if line.startswith('play:'):
+                    done += 1
+                    if 'interrotto' in line:
+                        return False
+            time.sleep(0.02)
+        return not barge.is_set()
+    finally:
+        speaking.clear()
+
+
+def speak(items):
+    """Frasi e azioni della risposta, nell'ordine. Ogni frase si sintetizza e va subito in coda a mtkaudio.
+    Restituisce (interrotta, frasi dette per intero)."""
+    pos = os.path.getsize(LOG)
+    barge.clear()
+    speaking.set()
+    queued, said, n = [], [], 0
+
+    def collect():
+        nonlocal pos
+        lines, pos = log_lines_since(pos)
+        for line in lines:
+            if line.startswith('play:') and queued:
+                text = queued.pop(0)
+                if 'interrotto' not in line:
+                    said.append(text)
+
+    try:
+        for item in items:
+            collect()
+            if barge.is_set() or not active.is_set():
+                break
+            if isinstance(item, dict):
+                while queued and not barge.is_set() and active.is_set():  # dopo le frasi che la precedono
+                    collect()
+                    time.sleep(0.02)
+                if not barge.is_set():
+                    execute(item)
+                continue
+            name = f'say-{n % 16}.raw'
+            n += 1
+            t = time.time()
+            render(item, f'{CT}/{name}')
+            log(f'piper {time.time() - t:.1f} s: {item}')
+            if barge.is_set():
+                break
+            queued.append(item)
+            mtk(f'mplay /data/local/tmp/{name}')
+        end = time.time() + 120  # aspetta che finisca di suonare (o l'interruzione)
+        while queued and active.is_set() and time.time() < end:
+            collect()
+            time.sleep(0.02)
+        interrupted = barge.is_set()
+        if not interrupted and active.is_set() and os.path.exists(f'{CT}/fine.raw'):
+            mtk('mplay /data/local/tmp/fine.raw')  # "tocca a te"
+            wait_log('play:', pos, timeout=5)
+        return interrupted, said
+    finally:
+        speaking.clear()
+
+
+# ---------------------------------------------------------------- ponte
+def ask(text, n=[0], note=None):
+    """Manda la frase al ponte; restituisce (id, generatore di frasi e azioni man mano che arrivano)."""
+    n[0] += 1
+    qid = f'{call["id"]}-{n[0]}'
+    pos = os.path.getsize(A)
+    q = {'id': qid, 'call': call['id'], 'caller': call['caller'], 'text': text}
+    if note:
+        q['interrupted'] = note
+    with open(Q, 'a') as f:
+        f.write(json.dumps(q, ensure_ascii=False) + '\n')
+
+    def items():
+        nonlocal pos
+        t, got = time.time(), 0
+        while time.time() - t < 180 and active.is_set() and not barge.is_set():
+            with open(A, 'rb') as f:
+                f.seek(pos)
+                data = f.read()
+            end = data.rfind(b'\n') + 1
+            pos += end
+            for line in data[:end].decode(errors='replace').splitlines():
+                try:
+                    a = json.loads(line)
+                except ValueError:
+                    continue
+                if a.get('id') != qid:
+                    continue
+                if got == 0:
+                    log(f'prima frase dopo {time.time() - t:.2f} s')
+                got += 1
+                if a.get('action'):
+                    yield a['action']
+                elif a.get('text'):
+                    yield a['text']
+                if a.get('final'):
+                    return
+            time.sleep(0.03)
+        if not got and not barge.is_set() and active.is_set():
+            yield 'Scusa, il mio cervello sul computer non risponde. Riprova tra poco.'
+    return qid, items()
+
+
+def cancel(qid):
+    with open(Q, 'a') as f:
+        f.write(json.dumps({'type': 'cancel', 'id': qid, 'call': call['id']}) + '\n')
+
+
+# ---------------------------------------------------------------- chiamata
+def conversation():
+    while not utterances.empty():
+        utterances.get()
+    try:
+        os.unlink(f'{CT}/{CAPTURE}')  # niente audio della chiamata precedente
     except FileNotFoundError:
         pass
-    rec = vosk.KaldiRecognizer(vosk_model, 16000)
-    pos = os.path.getsize(LOG)
-    with open(CMD, 'w') as f:
-        f.write(f'recvad /data/local/tmp/ascolto.raw 15 {SILENCE_MS} {THRESHOLD}\n')
-    off, done, t_end, fd = 0, False, None, None
-    deadline = time.time() + 30
-    while time.time() < deadline:
-        if not done:
-            with open(LOG, errors='replace') as f:
-                f.seek(pos)
-                done = any(l.startswith('recvad:') for l in f.read().splitlines())
-                if done:
-                    t_end = time.time()
-        if fd is None and os.path.exists(raw):
-            fd = open(raw, 'rb')
-        if fd:
-            chunk = fd.read()
-            if len(chunk) % 2:
-                fd.seek(-1, 1)
-                chunk = chunk[:-1]
-            if chunk:
-                rec.AcceptWaveform(chunk)
-                off += len(chunk)
-        if done:
-            break
-        time.sleep(0.05)
-    if fd:
-        fd.close()
-    if off < 16000:  # meno di mezzo secondo di parlato
-        return ''
-    text = json.loads(rec.FinalResult())['text']
-    log(f'trascrizione pronta {time.time() - (t_end or time.time()):.2f} s dopo la pausa: {text}')
-    return text
-
-
-def ask(text, n=[0]):
-    """Manda la frase al ponte e restituisce le frasi della risposta man mano che arrivano."""
-    n[0] += 1
-    qid = f'{call_id[0]}-{n[0]}'
-    pos = os.path.getsize(A)
-    with open(Q, 'a') as f:
-        f.write(json.dumps({'id': qid, 'call': call_id[0], 'caller': caller[0], 'text': text},
-                           ensure_ascii=False) + '\n')
-    t = time.time()
-    got = 0
-    while time.time() - t < 180 and active.is_set():  # con gli strumenti una risposta può richiedere tempo
-        with open(A, errors='replace') as f:
-            f.seek(pos)
-            data = f.read()
-        lines = data.split('\n')
-        pos += len(data.encode()) - len(lines[-1].encode())  # l'ultima riga può essere ancora a metà
-        for line in lines[:-1]:
-            try:
-                a = json.loads(line)
-            except ValueError:
-                continue
-            if a.get('id') != qid:
-                continue
-            if got == 0:
-                log(f'prima frase dopo {time.time() - t:.2f} s')
-            got += 1
-            if a.get('action'):
-                yield a['action']
-            elif a['text']:
-                yield a['text']
-            if a.get('final'):
-                return
-        time.sleep(0.03)
-    if not got:
-        yield 'Scusa, il mio cervello sul computer non risponde. Riprova tra poco.'
-
-
-def conversation():
-    play('saluto.raw')
-    silent = 0
+    mtk(f'cstart /data/local/tmp/{CAPTURE}')
+    threading.Thread(target=listener, daemon=True).start()
+    play_files(['saluto.raw'])
+    asked_quiet, note = False, None
     while active.is_set():
-        text = listen()
-        if not active.is_set():
-            break
-        if not text:
-            silent += 1
-            if silent == 2:
-                play('cisei.raw')
+        try:
+            text = utterances.get(timeout=QUIET_S)
+        except queue.Empty:
+            if not asked_quiet and active.is_set():
+                asked_quiet = True
+                play_files(['cisei.raw'])
             continue
-        silent = 0
-        speak(ask(text))
+        asked_quiet = False
+        while not utterances.empty():  # frasi arrivate insieme: una domanda sola
+            text += ' ' + utterances.get()
+        qid, items = ask(text, note=note)
+        interrupted, said = speak(items)
+        note = None
+        if interrupted:
+            cancel(qid)
+            note = ' '.join(said) if said else '(non avevi ancora detto niente)'
+            log(f'interrotta dopo: {note}')
+    mtk('cstop')
     log('conversazione finita')
-
-
-def render_fixed():
-    render(GREETING, f'{CT}/saluto.raw')
-    render('Ci sei? Non ti sento.', f'{CT}/cisei.raw')
 
 
 def watch_pronuncia():
@@ -263,7 +377,6 @@ def main():
     vosk.SetLogLevel(-1)
     voice = PiperVoice.load(VOICE)
     vosk_model = vosk.Model(VOSK_MODEL)
-    # Le frasi fisse si preparano subito, così il saluto parte appena si risponde
     render_fixed()
     threading.Thread(target=watch_pronuncia, daemon=True).start()
     for p in (Q, A):
@@ -279,11 +392,11 @@ def main():
                 if not cmd:
                     continue
                 if cmd[0] == 'start' and not active.is_set():
-                    call_id[0] = cmd[1] if len(cmd) > 1 else str(int(time.time()))
-                    caller[0] = cmd[2] if len(cmd) > 2 else ''
+                    call['id'] = cmd[1] if len(cmd) > 1 else str(int(time.time()))
+                    call['caller'] = cmd[2] if len(cmd) > 2 else ''
                     active.set()
                     threading.Thread(target=conversation, daemon=True).start()
-                    log(f'chiamata {call_id[0]}')
+                    log(f'chiamata {call["id"]}')
                 elif cmd[0] == 'stop':
                     active.clear()
 

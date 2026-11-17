@@ -15,7 +15,12 @@
  *   close               chiude lo stream di uscita
  *   mopen <rate> [canali]  apre lo stream "incall music" (flag 0x10000 verso 0x10000, la rete): MediaTek
  *                       lo manda al modem come background sound, lo sente chi è in linea
- *   mplay <file.raw>    scrive PCM 16 bit sullo stream incall music
+ *   mplay <file.raw>    mette in coda un PCM 16 bit sullo stream incall music e torna subito; un thread lo suona
+ *                       e a fine file stampa "play: <byte>" (o "play: interrotto <byte>")
+ *   mstop               interrompe subito quello che suona e svuota la coda (chi chiama ha preso la parola)
+ *   cstart <file.raw>   ascolto continuo: un thread legge lo stream di ingresso e accoda tutto al file, finché
+ *                       non arriva cstop; serve a sentire chi chiama anche mentre si parla
+ *   cstop               ferma l'ascolto continuo
  *   mclose              chiude lo stream incall music
  *   iopen <dev> <sorgente> <rate> [canali]  apre lo stream di ingresso (dev in esadecimale); per la voce
  *                       di chi chiama: 80000040 (rete) con sorgente 3 (downlink) o 4 (chiamata)
@@ -56,6 +61,10 @@ unsigned int sleep(unsigned int);
 int usleep(unsigned int);
 void free(void *);
 int setvbuf(FILE *, char *, int, size_t);
+typedef long pthread_t;
+int pthread_create(pthread_t *, const void *, void *(*)(void *), void *);
+int pthread_join(pthread_t, void **);
+char *strncpy(char *, const char *, size_t);
 
 /* ---- libhardware (Android 10, 32 bit) ---- */
 struct hw_module_t;
@@ -222,21 +231,79 @@ static struct audio_stream_out *open_out(int handle, uint32_t d, uint32_t f, uin
 	return o;
 }
 
-static void play(struct audio_stream_out *o, const char *path)
+/* ---- riproduzione in coda, interrompibile ----
+ * Un produttore (il thread dei comandi scrive q_head) e un consumatore (il player scrive q_tail), senza mutex.
+ * mstop incrementa la generazione: il player smette di suonare ciò che appartiene a una generazione vecchia,
+ * svuota lo stream (standby, dal suo stesso thread) e salta il resto della coda. */
+#define QLEN 32
+static char queue_path[QLEN][256];
+static unsigned queue_gen[QLEN];
+static volatile unsigned q_head, q_tail, cur_gen;
+static volatile int player_on;
+static pthread_t player_thr;
+
+static void *player(void *unused)
 {
-	static char buf[16384];
-	ssize_t k, tot = 0;
-	int fd = open(path, 0);
-	if (fd < 0 || !o) { printf("play: errore\n"); if (fd >= 0) close(fd); return; }
-	size_t bs = o->common.get_buffer_size(&o->common);
-	if (bs > sizeof buf) bs = sizeof buf;
-	while ((k = read(fd, buf, bs)) > 0) {
-		ssize_t w = o->write(o, buf, k);
-		if (w < 0) { printf("write: %d\n", (int)w); break; }
-		tot += w;
+	static char buf[2048];
+	while (player_on) {
+		if (q_tail == q_head) { usleep(5000); continue; }
+		unsigned slot = q_tail % QLEN, gen = queue_gen[slot];
+		ssize_t k, tot = 0;
+		int fd = gen == cur_gen ? open(queue_path[slot], 0) : -1;
+		if (fd >= 0 && music) {
+			size_t bs = music->common.get_buffer_size(&music->common);
+			if (bs > sizeof buf) bs = sizeof buf;
+			while (gen == cur_gen && (k = read(fd, buf, bs)) > 0) {
+				ssize_t w = music->write(music, buf, k);
+				if (w < 0) break;
+				tot += w;
+			}
+		}
+		if (fd >= 0) close(fd);
+		if (gen != cur_gen) {
+			/* 512 ms di buffer nello stream: standby lo svuota e la voce si ferma subito */
+			if (music && tot) music->common.standby(&music->common);
+			printf("play: interrotto %d\n", (int)tot);
+		} else {
+			printf("play: %d byte\n", (int)tot);
+		}
+		__sync_synchronize();
+		q_tail++;
 	}
-	close(fd);
-	printf("play: %d byte\n", (int)tot);
+	return 0;
+}
+
+static void enqueue(const char *path)
+{
+	if (!player_on) { player_on = 1; pthread_create(&player_thr, 0, player, 0); }
+	if (q_head - q_tail >= QLEN) { printf("play: coda piena\n"); return; }
+	unsigned slot = q_head % QLEN;
+	strncpy(queue_path[slot], path, 255);
+	queue_path[slot][255] = 0;
+	queue_gen[slot] = cur_gen;
+	__sync_synchronize();
+	q_head++;
+}
+
+static void stop_playing(void)
+{
+	cur_gen++;
+	__sync_synchronize();
+}
+
+static volatile int cap_on;
+static pthread_t cap_thr;
+static int cap_fd = -1;
+
+static void *capture(void *unused)
+{
+	static char buf[640];
+	while (cap_on && in) {
+		ssize_t k = in->read(in, buf, sizeof buf);
+		if (k <= 0) { usleep(10000); continue; }
+		write(cap_fd, buf, k);
+	}
+	return 0;
 }
 
 static char *arg(char *s)
@@ -350,8 +417,23 @@ int main(int argc, char **argv, char **envp)
 			if (music) dev->close_output_stream(dev, music);
 			music = open_out(14, 0x10000, 0x10000, rate, ch);
 		} else if (!strncmp(line, "mplay ", 6)) {
-			play(music, a);
+			enqueue(a);
+		} else if (!strncmp(line, "mstop", 5)) {
+			stop_playing();
+			printf("mstop\n");
+		} else if (!strncmp(line, "cstart ", 7)) {
+			if (cap_on) { cap_on = 0; pthread_join(cap_thr, 0); close(cap_fd); }
+			cap_fd = open(a, 0x241, 0644);
+			if (cap_fd < 0 || !in) { printf("cstart: errore\n"); continue; }
+			cap_on = 1;
+			pthread_create(&cap_thr, 0, capture, 0);
+			printf("cstart: %s\n", a);
+		} else if (!strncmp(line, "cstop", 5)) {
+			if (cap_on) { cap_on = 0; pthread_join(cap_thr, 0); close(cap_fd); cap_fd = -1; }
+			printf("cstop\n");
 		} else if (!strncmp(line, "mclose", 6)) {
+			stop_playing();
+			while (q_tail != q_head) usleep(5000);
 			if (music) dev->close_output_stream(dev, music);
 			music = 0;
 			printf("chiuso\n");
@@ -425,6 +507,7 @@ int main(int argc, char **argv, char **envp)
 			if (fd >= 0) close(fd);
 			printf("recvad: %u byte parlato %d\n", (unsigned)tot, spoke);
 		} else if (!strncmp(line, "iclose", 6)) {
+			if (cap_on) { cap_on = 0; pthread_join(cap_thr, 0); close(cap_fd); cap_fd = -1; }
 			if (in) dev->close_input_stream(dev, in);
 			in = 0;
 			printf("chiuso\n");
