@@ -1,0 +1,31 @@
+[15:58:14] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[15:58:15] Building [94m1[0m package[0m
+[15:58:15]    [94m*[0m edge/linux-xiaomi-dandelion[0m
+[15:58:15] [93m=> (1/1)[0m [94medge/linux-xiaomi-dandelion[0m: Installing dependencies[0m
+[15:58:15] Initializing x86_64 buildroot[0m
+[15:58:16] (native) Creating chroot[0m
+[15:58:17] (native) install abuild apk-tools build-base ccache git pigz[0m
+[15:58:18] (native) install ccache-cross-symlinks abuild gcc-aarch64 g++-aarch64[0m
+[15:58:19] (native) install perl bc bison flex python3 findutils openssl-dev bash devicepkg-dev[0m
+[15:58:20] [93m=>[0m [94medge/linux-xiaomi-dandelion[0m: Building package (cross compiling: cross-native)[0m
+[15:59:28] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[15:59:28] [93m=>[0m [94medge/linux-xiaomi-dandelion[0m: Done![0m
+[15:59:28] [93m=>[0m [92mFinished building packages[0m
+[15:59:28] [92mDONE![0m[0m
+[15:59:29] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[15:59:30] Building [94m1[0m package[0m
+[15:59:30]    [94m*[0m edge/device-xiaomi-dandelion[0m
+[15:59:30] [93m=> (1/1)[0m [94medge/device-xiaomi-dandelion[0m: Installing dependencies[0m
+[15:59:30] Initializing aarch64 buildroot[0m
+[15:59:30] (native) Creating chroot[0m
+[15:59:32] (native) install qemu-aarch64[0m
+[15:59:32] Register qemu binfmt (aarch64)[0m
+[15:59:32] (buildroot_aarch64) Creating chroot[0m
+[15:59:34] (buildroot_aarch64) install abuild apk-tools build-base ccache git pigz[0m
+[15:59:36] (native) install ccache-cross-symlinks abuild gcc-aarch64 g++-aarch64 crossdirect[0m
+[15:59:37] (buildroot_aarch64) install devicepkg-dev[0m
+[15:59:37] [93m=>[0m [94medge/device-xiaomi-dandelion[0m: Building package (cross compiling: crossdirect)[0m
+[15:59:44] Zapping buildroots (running in strict mode by default, use --lax to skip zap)[0m
+[15:59:44] [93m=>[0m [94medge/device-xiaomi-dandelion[0m: Done![0m
+[15:59:44] [93m=>[0m [92mFinished building packages[0m
+[15:59:44] [92mDONE![0m[0m

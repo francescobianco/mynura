@@ -74,7 +74,7 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 | Touchscreen | ✅ | `fts_ts` con firmware `focaltech_aa_ts_fw_helitai.bin` dalla partizione `vendor`, incluso nell'initramfs. Scala 720×1600 corretta |
 | Tasti fisici | ❔ | |
 | Storage interno / SD | ⚠️ | eMMC ✅, rootfs in `userdata` esteso a 21,5 GB. SD non provata |
-| Batteria / ricarica | ⚠️ | `status` = Charging, ma `capacity` = -1: livello non letto |
+| Batteria / ricarica | ⚠️ | Tensione e corrente lette; `capacity` = -1 (manca `fuelgauged`). Resta acceso a cavo staccato ✅ |
 | Wi-Fi | ❔ | MediaTek connsys (combo wifi/BT integrato): sui downstream di solito è il punto più difficile |
 | Bluetooth | ❔ | |
 | Audio | ❔ | |
@@ -99,7 +99,7 @@ Legenda: ✅ funziona · ⚠️ parziale · ❌ non funziona · ❔ non testato
 10. [x] Scrivere il rootfs in `userdata` e avviare il sistema completo (2026-11-09): SSH funzionante
 11. [ ] Automatizzare il footer AVB nel port, così `pmbootstrap flasher` produce un boot.img già avviabile
 12. [ ] Display e console sullo schermo
-13. [ ] Batteria, Wi-Fi, modem
+13. [ ] Batteria, Wi-Fi, modem (modem: avvio fino a «ready» nel contenitore, 2026-11-17)
 
 ## Come si flasha
 
@@ -135,6 +135,56 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-17 — 📡 Il modem si avvia: stato «ready» con init di Android in un contenitore (Claude per @francesco)
+
+- Obiettivo: la SIM sotto Nura (poi Asterisk sul telefono). Strada scelta: i programmi del modem di MIUI in un contenitore,
+  come fa Halium. Script in `modem/`: `miui-mount.sh` (system, vendor e product da `super` con device-mapper, in sola
+  lettura: la `super` sul telefono è identica al backup), `ct-setup.sh` (radice tmpfs, APEX, **copie** di nvdata, nvcfg,
+  protect1/2, persist e nvram: le partizioni vere non vengono toccate), `ct-start.sh` e `init.rc`.
+- LK carica già il firmware del modem (`/sys/kernel/ccci/lk_md`: «LK load MD success!»). Il kernel ha binder, hwbinder,
+  vndbinder, ashmem, ion, COMPAT e i namespace: basta per l'userspace Android a 32 bit.
+- `ccci_mdinit` da solo in chroot si ferma: aspetta la proprietà `vendor.service.nvram_init`, quindi serve init di Android.
+- init di MIUI nel contenitore, ostacoli in fila: `/sys` senza selinuxfs (serve `--rbind`), `INIT_STARTED_AT` mancante
+  (segfault), `/dev/socket` e `/dev/.coldboot_done` da creare (li fanno la prima fase e ueventd), `/apex` deve essere un
+  punto di montaggio, `pivot_root` invece di `chroot` (init entra nei suoi namespace con `setns` e con chroot si ritrovava
+  la radice di Nura), permessi dei nodi `/dev/ccci*` come in `ueventd.rc`.
+- SELinux: init carica la politica di MIUI. Il kernel ha `SELINUX_DEVELOP=y` e con `androidboot.selinux=permissive` resta
+  permissivo: Nura continua a funzionare. Si azzera al riavvio.
+- **Risultato:** `nvram_daemon` → `nvram_init=Ready` → `ccci_mdinit` → `md_state` 2, 3, 4, `vendor.mtk.md1.status=ready`.
+  `ccci_fsd` apre il suo canale, il modem manda i primi messaggi di sistema.
+- Dopo circa 5 s il modem va in eccezione e il telefono si riavvia. Il riavvio è colpa del kernel: salvando i registri
+  CLDMA, `ccci_util_mem_dump` copia byte per byte dalla memoria del dispositivo, il compilatore ne fa un `memcpy` e arriva
+  un alignment fault (`Oops: 96000021`, `PC is at __memcpy`). Correzione nel `prepare()` del kernel (pkgrel 6): lettura
+  `volatile` byte per byte. Serve a leggere il motivo dell'eccezione del modem, che il crash cancella.
+- Log completo dell'avvio fino all'eccezione: `raw/modem-logs/modem-run-20261117-ready-poi-eccezione.log`.
+- Nuovo `scripts/kernel-update-xiaomi-dandelion.sh`: aggiorna kernel e pacchetto del dispositivo dal telefono stesso,
+  senza riscrivere userdata (restano sudo, contenitore e copie NVRAM).
+
+### 2026-11-17 — Si spegne staccando la USB: è la modalità «ricarica a telefono spento» (Claude per @francesco)
+
+- Sintomo: con il cavo staccato il telefono si spegne subito. La batteria non c'entra: il driver legge 4,38 V, corrente e
+  temperatura. Manca solo la percentuale (`capacity` = -1, `gm3:0`): senza il demone `fuelgauged` di Android l'algoritmo
+  del fuel gauge MediaTek non gira.
+- Causa vera: `/sys/class/BOOT/BOOT/boot/boot_mode` = **8** (`KERNEL_POWER_OFF_CHARGING_BOOT`), e nella riga di comando c'è
+  `androidboot.mode=charger`. LK lo passa in `atag,boot` quando il telefono si accende col cavo inserito. In quella modalità
+  `mt_charger_online()` (`mtk_chg_type_det.c`) e `kpoc_power_off_check()` (`mtk_charger.c`) chiamano `kernel_power_off()`
+  appena sparisce la VBUS.
+- Correzione: `prepare()` del kernel modifica `mtk_boot_common.c` e trasforma le modalità 8 e 9 in `NORMAL_BOOT`. pkgrel 5.
+  Da verificare dopo il flash: `boot_mode` = 0 e telefono acceso a cavo staccato.
+- Verifica dopo il flash (kernel `#6`): `boot_mode` = 0 e `KPOC(0)`, anche se LK passa ancora `androidboot.mode=charger`.
+  Staccato dalle 14:39 alle 14:51, il telefono è rimasto acceso.
+- **Seconda causa, in userspace.** Gli spegnimenti delle 12:56 e delle 14:34 sono ordinati: `logread -b -1` mostra elogind
+  con «Power key pressed short. Powering off...». Il valore predefinito di `HandlePowerKey` è `poweroff`, quindi basta
+  premere il tasto per accendere lo schermo. Aggiunto `logind.conf.d/90-dandelion.conf` (`HandlePowerKey=ignore`, spegnimento
+  solo con pressione lunga). Pacchetto del dispositivo, pkgrel 9: da compilare e verificare.
+- Verifica con pkgrel 9 (15:14): sette pressioni brevi del tasto, solo «Power key pressed short», nessuno spegnimento.
+  Staccato per 35 s: acceso. ✅
+- Dopo aver ricollegato il cavo, il PC non riceve l'indirizzo: il servizio `unudhcpd.usb0` gira con `-i usb0`, ma qui
+  l'interfaccia si chiama `rndis0` (172.16.42.1/16). Il primo indirizzo arriva da altro, al ricollegamento nessuno risponde.
+  Aggiunto il servizio `unudhcpd.rndis0` con `conf.d` (pkgrel 10), da verificare. Fino ad allora SSH funziona in IPv6
+  link-local: `ssh francesco@fe80::…%enx…`, con l'indirizzo che si trova con `ping -6 ff02::1%enx…`.
+- Resta aperto: percentuale della batteria. Serve un fuel gauge in userspace o una stima dalla tensione.
 
 ### 2026-11-09 — Sxmo dwm parte e resta acceso, touch e tasti ancora da sistemare (Claude per @francesco)
 

@@ -1,0 +1,48 @@
+# init.rc minimo del contenitore modem di Nura: solo NVRAM e modem.
+on early-init
+    mkdir /dev/socket 0755 root root
+
+on late-init
+    trigger post-fs-data
+    trigger boot
+
+on post-fs-data
+    mkdir /data/vendor 0771 root root
+    mkdir /data/vendor/ccci_cfg 0770 system radio
+    mkdir /data/vendor/mdlpm 0770 system radio
+    mkdir /data/vendor/md3 0770 system radio
+    mkdir /data/vendor/nvram 0771 root system
+    mkdir /mnt/vendor/nvdata/md 0770 root system
+    chown radio radio /sys/kernel/ccci/boot
+    chmod 0660 /dev/ccci_fs
+    chmod 0666 /dev/binder
+    chmod 0666 /dev/hwbinder
+    chmod 0666 /dev/vndbinder
+
+on boot
+    start nvram_daemon
+    start vendor.ccci_fsd
+
+on property:vendor.service.nvram_init=Ready
+    start ccci_mdinit
+
+service nvram_daemon /vendor/bin/nvram_daemon
+    user root
+    group system radio
+    oneshot
+    disabled
+    seclabel u:r:init:s0
+
+service vendor.ccci_fsd /vendor/bin/ccci_fsd 0
+    user radio
+    group radio system root
+    oneshot
+    disabled
+    seclabel u:r:init:s0
+
+service ccci_mdinit /vendor/bin/ccci_mdinit 0
+    user system
+    group radio system
+    oneshot
+    disabled
+    seclabel u:r:init:s0

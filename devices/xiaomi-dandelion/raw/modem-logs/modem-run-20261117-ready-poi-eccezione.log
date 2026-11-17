@@ -1,0 +1,408 @@
+[  161.353108]  (0)[0:swapper/0]Power/swap DP: No enter --- SODI3: No enter --- SODI: No enter --- 
+[  161.353144]  (1)[0:swapper/1]mcdi cpu: 10, 6, 10, 1, 92, 94, 99, 56, cluster : 22, 73, pause = 73, multi core = 63, latency = 0, residency = 0, last core = 73, avail cpu = 00ff, cluster = 0003, enabled = 1, max_s_state = 5, system_idle_hint = 00000000
+[  161.353572] -(1)[5210:sshd-session.pa]eth_start_xmit: 17 callbacks suppressed
+[  161.686749]  (6)[312:wdtk-6][wdk-c] cpu=6,lbit=0x40,cbit=0xff,0,1,1156484925,[161686743461,20000000,181682911]
+[  161.686762]  (6)[312:wdtk-6][thread:312][RT:161686756615] 2026-11-17 14:43:30.674544 UTC;android time 2026-11-17 15:43:30.674544
+[  161.695878]  (4)[310:wdtk-4][wdk-c] cpu=4,lbit=0x50,cbit=0xff,0,1,1156484925,[161695872846,19990871,181682911]
+[  161.700115]  (3)[309:wdtk-3][wdk-c] cpu=3,lbit=0x58,cbit=0xff,0,1,1156484925,[161700111231,19986632,181682911]
+[  161.715871]  (0)[306:wdtk-0][wdk-c] cpu=0,lbit=0x59,cbit=0xff,0,1,1156484925,[161715865385,19970878,181682911]
+[  161.715874]  (1)[307:wdtk-1][wdk-c] cpu=1,lbit=0x5b,cbit=0xff,0,1,1156484925,[161715869231,19970874,181682911]
+[  161.715878]  (5)[311:wdtk-5][wdk-c] cpu=5,lbit=0x7b,cbit=0xff,0,1,1156484925,[161715872615,19970871,181682911]
+[  161.716208]  (7)[313:wdtk-7][wdk-c] cpu=7,lbit=0xfb,cbit=0xff,0,1,1156484925,[161716203308,19970540,181682911]
+[  161.716215]  (2)[308:wdtk-2][wdk-k] cpu=2,lbit=0xff,cbit=0xff,0,1,1156484925,[161716210000,19970533,181682911]
+[  162.132567] -(0)[0:swapper/0]mtk_charger_alarm_timer_func: not suspend, wake up charger
+[  162.134596]  (0)[304:charger_thread]mt635x-auxadc mt-pmic:mt635x-auxadc: name:ISENSE, channel=0, adc_out=0x67ab, adc_result=4373
+[  162.134938]  (0)[304:charger_thread]mt635x-auxadc mt-pmic:mt635x-auxadc: name:VCDT, channel=2, adc_out=0x493, adc_result=514
+[  162.135135]  (0)[304:charger_thread][CH3_DBG] bat_cur = -15
+[  162.135673]  (0)[304:charger_thread]mt635x-auxadc mt-pmic:mt635x-auxadc: name:BAT_TEMP, channel=3, adc_out=0x833, adc_result=922
+[  162.135938]  (0)[304:charger_thread]Vbat=4373,Ibat=9,I=0,VChr=4863,T=24,Soc=-1:-1,CT:2:2 hv:1 pd:0:0
+[  162.135944]  (0)[304:charger_thread]mtk_charger_start_timer: alarm timer start:0, 172 132110855
+[  162.135948] -(0)[304:charger_thread]alarmtimer_enqueue, 172132110855
+[  162.136140]  (0)[304:charger_thread][CH3_DBG] bat_cur = -15
+[  162.136264]  (0)[166:kworker/0:1][FTS_TS/E]fts_ts_usb_plugin_work_func:tp is suspend,can not be set
+
+[  162.136696]  (0)[304:charger_thread]mt635x-auxadc mt-pmic:mt635x-auxadc: name:BAT_TEMP, channel=3, adc_out=0x834, adc_result=922
+[  162.136962]  (0)[304:charger_thread][SW_JEITA] Battery Normal Temperature between 17 and 50 !!
+[  162.136965]  (0)[304:charger_thread][SW_JEITA]preState:3 newState:3 tmp:24 cv:4420000
+[  162.137291]  (0)[304:charger_thread]mt635x-auxadc mt-pmic:mt635x-auxadc: name:VCDT, channel=2, adc_out=0x494, adc_result=515
+[  162.137615]  (0)[304:charger_thread]tmp:24 (jeita:1 sm:3 cv:4420000 en:1) (sm:1) en:1 c:0 s:0 ov:0 1 1
+[  162.137619]  (0)[304:charger_thread]mtk_switch_charging_run [1 0], timer=150
+[  162.137846]  (0)[304:charger_thread][CH3_DBG] bat_cur = -9
+[  162.138585]  (0)[304:charger_thread]pe40_ready:0 hv:1 thermal:-1,-1 tmp:24,39,16 pps:0 en:0 ibus:0 80
+[  162.138591]  (0)[304:charger_thread]mtk_pe20_start_algorithm: stop, PE+20 is not connected
+[  162.138596]  (0)[304:charger_thread]mtk_pe_start_algorithm: stop, PE+ is not connected
+[  162.138932]  (0)[304:charger_thread]mtk_pe_start_algorithm: vchr_org = 5000, vchr_after = 4863, delta = -137
+[  162.138942]  (0)[304:charger_thread]force:0 thermal:-1,-1 pe4:-1,-1,0 setting:1500 1500 type:2 usb_unlimited:0 usbif:0 usbsm:2 aicl:-1 atm:0
+[  162.139368]  (0)[304:charger_thread][bq2560x]:bq2560x_set_ichg: [bq2560x_set_ichg] current has set!
+[  162.139371]  (0)[304:charger_thread]enable_sw_jeita,current=1500000
+[  162.139641]  (0)[304:charger_thread][bq2560x]:bq2560x_charging: enable charger successfully
+[  162.140335]  (3)[304:charger_thread][bq2560x]:bq2560x_charging: enable charger successfully
+[  162.140630]  (3)[304:charger_thread][bq2560x]:bq2560x_do_event: bq2560x_do_event: event = 0
+[  162.140637]  (3)[304:charger_thread]charger_dev_event 2
+[  162.140640]  (3)[304:charger_thread]battery_callback:0
+[  162.140645]  (3)[304:charger_thread][fg_chr_full_int_handler]
+[  162.140870]  (3)[304:charger_thread][CH3_DBG] bat_cur = 6
+[  162.141716]  (3)[304:charger_thread][fg_bat_temp_int_sw_check] tmp 24 lt 65535 ht 65535
+[  162.141937]  (3)[304:charger_thread][CH3_DBG] bat_cur = 6
+[  162.142884]  (3)[304:charger_thread][fg_bat_temp_int_internal][FG_TEMP_INT] T[24] V[65535 65535] C[65535 65535] h[9462 9000]
+[  162.146132]  (3)[304:charger_thread][CH3_DBG] bat_cur = -6
+[  162.147036]  (3)[304:charger_thread]BAT_TEMP_PREV:922,BAT_TEMP:921,VBIF28:1793
+[  162.147803]  (3)[304:charger_thread][fg_sw_bat_cycle_accu]ERROR!drop diff_car
+[  162.148257]  (3)[304:charger_thread][fg_sw_bat_cycle_accu]car[o:1 n:38],diff_car:37,ncar[o:0 n:0 hw:0] thr 0
+[  162.150242]  (1)[304:charger_thread][CH3_DBG] bat_cur = 0
+[  162.151383]  (1)[304:charger_thread]charger_dev_event: end of charge
+[  162.151392]  (1)[304:charger_thread]battery full!
+[  162.151571]  (0)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[00] = 0x6e
+[  162.151729]  (0)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[01] = 0x1a
+[  162.152197]  (2)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[02] = 0x99
+[  162.152434]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[03] = 0x23
+[  162.152602]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[04] = 0x88
+[  162.152762]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[05] = 0x87
+[  162.152907]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[06] = 0x66
+[  162.153051]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[07] = 0x4d
+[  162.153194]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[08] = 0x5c
+[  162.153337]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[09] = 0x00
+[  162.153480]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[0a] = 0x83
+[  162.153626]  (3)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[0b] = 0x14
+[  162.156354]  (5)[304:charger_thread][CH3_DBG] bat_cur = -3
+[  162.157180]  (5)[304:charger_thread]Vbat=4373,Ibat=-9,I=0,VChr=4692,T=24,Soc=-1:-1,CT:2:2 hv:1 pd:0:0
+[  162.157209]  (5)[36:kworker/5:0][FTS_TS/E]fts_ts_usb_plugin_work_func:tp is suspend,can not be set
+
+[  162.157220]  (5)[304:charger_thread]mtk_charger_start_timer: alarm timer start:1, 172 153385701
+[  162.157224] -(5)[304:charger_thread]alarmtimer_enqueue, 172153385701
+[  162.157462]  (5)[304:charger_thread][CH3_DBG] bat_cur = 3
+[  162.158269]  (5)[304:charger_thread][SW_JEITA] Battery Normal Temperature between 17 and 50 !!
+[  162.158274]  (5)[304:charger_thread][SW_JEITA]preState:3 newState:3 tmp:24 cv:4420000
+[  162.158970]  (5)[304:charger_thread]tmp:24 (jeita:1 sm:3 cv:4420000 en:1) (sm:1) en:1 c:0 s:0 ov:0 1 1
+[  162.158975]  (5)[304:charger_thread]mtk_switch_charging_run [5 0], timer=160
+[  162.159626]  (5)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[00] = 0x6e
+[  162.159794]  (5)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[01] = 0x1a
+[  162.159959]  (5)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[02] = 0x99
+[  162.160134]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[03] = 0x23
+[  162.160302]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[04] = 0x88
+[  162.160468]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[05] = 0x87
+[  162.160631]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[06] = 0x66
+[  162.160798]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[07] = 0x4d
+[  162.160964]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[08] = 0x5c
+[  162.161129]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[09] = 0x00
+[  162.161290]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[0a] = 0x83
+[  162.161452]  (4)[304:charger_thread][bq2560x]:bq2560x_dump_regs: Reg[0b] = 0x14
+[  162.271884]  (4)[302:kworker/4:1]usb_state<CONFIGURED>
+[  163.092880] -(5)[104:kworker/u16:2]eth_start_xmit: 22 callbacks suppressed
+[  163.748238]  (1)[5370:init]init 3: Loading SELinux policy
+[  163.761187]  (1)[5370:init]SELinux: 16384 avtab hash slots, 40788 rules.
+[  163.780775]  (1)[5370:init]SELinux: 16384 avtab hash slots, 40788 rules.
+[  163.780792]  (1)[5370:init]SELinux:  1 users, 4 roles, 2812 types, 0 bools, 1 sens, 1024 cats
+[  163.780797]  (1)[5370:init]SELinux:  97 classes, 40788 rules
+[  163.784982]  (1)[5370:init]SELinux:  Completing initialization.
+[  163.784991]  (1)[5370:init]SELinux:  Setting up existing superblocks.
+[  163.787968]  (2)[1678:logbookd]audit: type=1400 audit(1794926612.772:2): avc:  denied  { read } for  pid=1678 comm="logbookd" path="/dev/kmsg" dev="devtmpfs" ino=2067 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+[  163.912653]  (1)[5370:init]audit: type=1403 audit(1794926612.896:3): policy loaded auid=4294967295 ses=4294967295
+[  163.912911]  (1)[5370:init]selinux 3: SELinux: Loaded policy from /vendor/etc/selinux/precompiled_sepolicy
+
+[  163.913114]  (1)[5370:init]audit: type=1400 audit(1794926612.896:4): avc:  denied  { read } for  pid=5370 comm="init" name="cmdline" dev="loop0p2" ino=250985 scontext=u:r:kernel:s0 tcontext=u:object_r:unlabeled:s0 tclass=file permissive=1
+[  163.913130]  (1)[5370:init]audit: type=1400 audit(1794926612.896:5): avc:  denied  { open } for  pid=5370 comm="init" path="/proc/cmdline" dev="loop0p2" ino=250985 scontext=u:r:kernel:s0 tcontext=u:object_r:unlabeled:s0 tclass=file permissive=1
+[  163.913151]  (1)[5370:init]audit: type=1400 audit(1794926612.896:6): avc:  denied  { getattr } for  pid=5370 comm="init" path="/proc/cmdline" dev="loop0p2" ino=250985 scontext=u:r:kernel:s0 tcontext=u:object_r:unlabeled:s0 tclass=file permissive=1
+[  163.913889]  (2)[1678:logbookd]audit: type=1400 audit(1794926612.896:7): avc:  denied  { read } for  pid=1678 comm="logbookd" path="/dev/kmsg" dev="devtmpfs" ino=2067 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+[  163.914336]  (7)[5210:sshd-session.pa]audit: type=1400 audit(1794926612.896:8): avc:  denied  { write } for  pid=5210 comm="sshd-session.pa" path="socket:[24746]" dev="sockfs" ino=24746 scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=tcp_socket permissive=1
+[  163.920262]  (1)[5370:init]selinux 3: SELinux: Loaded file_contexts
+
+[  163.923640]  (0)[5370:init]audit: type=1400 audit(1794926612.904:9): avc:  denied  { read } for  pid=5370 comm="init" path="/dev/null" dev="devtmpfs" ino=2062 scontext=u:r:init:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+[  163.952609]  (0)[5370:init]init 3: init second stage started!
+[  164.003770]  (0)[5370:init]init 3: Using Android DT directory /proc/device-tree/firmware/android/
+[  164.003963]  (2)[1678:logbookd]audit: type=1400 audit(1794926612.988:10): avc:  denied  { read } for  pid=1678 comm="logbookd" path="/dev/kmsg" dev="devtmpfs" ino=2067 scontext=u:r:kernel:s0 tcontext=u:object_r:device:s0 tclass=chr_file permissive=1
+[  164.004160]  (7)[5210:sshd-session.pa]audit: type=1400 audit(1794926612.988:11): avc:  denied  { write } for  pid=5210 comm="sshd-session.pa" path="socket:[24746]" dev="sockfs" ino=24746 scontext=u:r:kernel:s0 tcontext=u:r:kernel:s0 tclass=tcp_socket permissive=1
+[  164.005379]  (0)[5370:init]init 3: Init cannot set 'ro.boot.hardware' to 'mt6765': Read-only property was already set
+[  164.005436]  (0)[5370:init]init 3: Init cannot set 'ro.boot.mode' to 'normal': Read-only property was already set
+[  164.005969]  (0)[5370:init]init 3: Init cannot set 'ro.boot.serialno' to '<seriale-oscurato>': Read-only property was already set
+[  164.011944]  (0)[5370:init]selinux 3: SELinux: Loaded file_contexts
+
+[  164.011981]  (0)[5370:init]init 3: Running restorecon...
+[  164.038764]  (0)[5370:init]init 3: Overriding previous 'ro.' property 'ro.product.system.marketname':'Redmi 9A' with new value 'Redmi 9AT'
+[  164.038797]  (0)[5370:init]init 3: Overriding previous 'ro.' property 'ro.product.system.model':'M2006C3LG' with new value 'M2006C3LVG'
+[  164.039899]  (0)[5370:init]init 7: Overriding previous 'ro.' property 'ro.sf.lcd_density':'440' with new value '320'
+[  164.041548]  (0)[5370:init]selinux 7: avc:  denied  { set } for  scontext=u:r:vendor_init:s0 tcontext=u:object_r:system_prop:s0 tclass=property_service permissive=1
+
+[  164.041658]  (0)[5370:init]init 7: Overriding previous 'ro.' property 'ro.config.notification_sound':'pixiedust.ogg' with new value 'OnTheHunt.ogg'
+[  164.041799]  (0)[5370:init]selinux 7: avc:  denied  { set } for  scontext=u:r:vendor_init:s0 tcontext=u:object_r:radio_prop:s0 tclass=property_service permissive=1
+
+[  164.042717]  (0)[5370:init]selinux 7: avc:  denied  { set } for  scontext=u:r:vendor_init:s0 tcontext=u:object_r:default_prop:s0 tclass=property_service permissive=1
+
+[  164.048005]  (0)[5370:init]selinux 7: avc:  denied  { set } for  scontext=u:r:vendor_init:s0 tcontext=u:object_r:vendor_ro_audio_prop:s0 tclass=property_service permissive=1
+
+[  164.048123]  (0)[5370:init]init 7: Overriding previous 'ro.' property 'ro.config.ringtone':'Ring_Synth_04.ogg' with new value 'BirdLoop.ogg'
+[  164.048686]  (0)[5370:init]init 7: Overriding previous 'ro.' property 'ro.product.vendor.marketname':'Redmi 9A' with new value 'Redmi 9AT'
+[  164.048713]  (0)[5370:init]init 7: Overriding previous 'ro.' property 'ro.product.vendor.model':'M2006C3LG' with new value 'M2006C3LVG'
+[  164.048796]  (0)[5370:init]init 3: Couldn't load property file '/odm/etc/build.prop': open() failed: No such file or directory: No such file or directory
+[  164.049957]  (0)[5370:init]init 3: Overriding previous 'ro.' property 'ro.product.product.marketname':'Redmi 9A' with new value 'Redmi 9AT'
+[  164.049985]  (0)[5370:init]init 3: Overriding previous 'ro.' property 'ro.product.product.model':'M2006C3LG' with new value 'M2006C3LVG'
+[  164.050019]  (0)[5370:init]init 3: Couldn't load property file '/product_services/build.prop': open() failed: No such file or directory: No such file or directory
+[  164.050043]  (0)[5370:init]init 3: Couldn't load property file '/factory/factory.prop': open() failed: No such file or directory: No such file or directory
+[  164.050579]  (0)[5370:init]init_hook_E: Could not find /cust/cust_variant and /data/miui/cust_variant
+[  164.051159]  (0)[5370:init]init_hook_I: cust prop white key: persist.sys.timezone
+[  164.051169]  (0)[5370:init]init_hook_I: cust prop white key: ro.carrier.name
+[  164.051175]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.cust_variant
+[  164.051180]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.region
+[  164.051186]  (0)[5370:init]init_hook_I: cust prop white key: ro.product.locale.language
+[  164.051191]  (0)[5370:init]init_hook_I: cust prop white key: ro.product.locale.region
+[  164.051196]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.mcc
+[  164.051201]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.mnc
+[  164.051206]  (0)[5370:init]init_hook_I: cust prop white key: ro.com.android.mobiledata
+[  164.051211]  (0)[5370:init]init_hook_I: cust prop white key: ro.build.hardware.version
+[  164.051216]  (0)[5370:init]init_hook_I: cust prop white key: ro.com.google.clientidbase
+[  164.051221]  (0)[5370:init]init_hook_I: cust prop white key: ro.com.google.clientidbase.ms
+[  164.051226]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.cts
+[  164.051231]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.customized.region
+[  164.051236]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.customized_clientid
+[  164.051241]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.singlesim
+[  164.051246]  (0)[5370:init]init_hook_I: cust prop white key: ro.com.google.rlz_ap_whitelist
+[  164.051251]  (0)[5370:init]init_hook_I: cust prop white key: ro.com.google.rlzbrandcode
+[  164.051256]  (0)[5370:init]init_hook_I: cust prop white key: persist.miui.density_v2
+[  164.051261]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.cta
+[  164.051266]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.cust_hardware
+[  164.051272]  (0)[5370:init]init_hook_I: cust prop white key: persist.sys.miui_optimization
+[  164.051277]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.cust_variant
+[  164.051282]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.region
+[  164.051287]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.mcc
+[  164.051292]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.mnc
+[  164.051297]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.cts
+[  164.051302]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.customized.region
+[  164.051308]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.customized_clientid
+[  164.051313]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.singlesim
+[  164.051317]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.cta
+[  164.051322]  (0)[5370:init]init_hook_I: cust prop white key: ro.vendor.miui.cust_hardware
+[  164.051328]  (0)[5370:init]init_hook_I: cust prop white key: ro.miui.enterprise.licence
+[  164.051333]  (0)[5370:init]init_hook_I: cust prop white key: persist.sys.ent_activated
+[  164.051376]  (0)[5370:init]init 3: Couldn't load property file '/data/miui/cts.prop': open() failed: No such file or directory: No such file or directory
+[  164.051678]  (0)[5370:init]init 8: ReapLogC PropSet [Build.BRAND]=[MTK]164.47569 [audio.chk.cal.spk]=[0]164.47590 [audio.chk.cal.us]=[0]164.47602 [bluetooth.enable_timeout_ms]=[8000]164.47616 [camera.disable_zsl_mode]=[1]164.47630 [dalvik.vm.appimageformat]=[lz4]164.47645 [dalvik.vm.dex2oat-Xms]=[64m]164.47660 [dalvik.vm.dex2oat-Xmx]=[512m]164.47673 [dalvik.vm.dex2oat-max-image-block-size]=[524288]164.47690 [dalvik.vm.dex2oat-minidebuginfo]=[true]164.47706 [dalvik.vm.dex2oat-resolve-startup-strings]=[true]164.47722 [dalvik.vm.dexopt.secondary]=[true]164.47736 [dalvik.vm.heapgrowthlimit]=[256m]164.47750 [dalvik.vm.heapsize]=[512m]164.47764 [dalvik.vm.image-dex2oat-Xms]=[64m]164.47778 [dalvik.vm.image-dex2oat-Xmx]=[64m]164.47792 [dalvik.vm.isa.arm.features]=[default]164.47807 Done
+[  164.052084]  (0)[5370:init]init 8: ReapLogC PropSet [dalvik.vm.isa.arm.variant]=[cortex-a53]164.47862 [dalvik.vm.minidebuginfo]=[true]164.47878 [dalvik.vm.mtk-stack-trace-file]=[/data/anr/mtk_traces.txt]164.47895 [dalvik.vm.usejit]=[true]164.47910 [dalvik.vm.usejitprofiles]=[true]164.47925 [debug.atrace.tags.enableflags]=[0]164.47938 [debug.sf.disable_backpressure]=[1]164.47952 [drm.service.enabled]=[true]164.47964 [keyguard.no_require_sim]=[true]164.47978 [log.tag.stats_log]=[I]164.47991 [media.stagefright.thumbnail.prefer_hw_codecs]=[true]164.48134 [mediatek.wlan.ctia]=[0]164.48150 [net.bt.name]=[Android]164.48164 [persist.bg.dexopt.enable]=[true]164.48179 [persist.device_config.runtime_native.usap_pool_enabled]=[false]164.48196 [persist.enable_task_snapshots]=[false]164.48211 Done
+[  164.053663]  (0)[5370:init]init 8: ReapLogC PropSet [persist.lm.em.enabled]=[1]164.48270 [persist.lm.em.flush_threshold_mb]=[100]164.48284 [persist.lm.em.mark_threshold_mb]=[300]164.48298 [persist.lm.em.test_mode]=[1]164.48310 [persist.power.useautobrightadj]=[true]164.49653 [persist.radio.apm_sim_not_pwdn]=[1]164.49671 [persist.radio.multisim.config]=[dsds]164.49686 [persist.sys.dalvik.vm.lib.2]=[libart.so]164.49705 [persist.sys.df.extcolor.proc]=[0]164.49721 [persist.sys.mcd_config_file]=[/system/etc/mcd_default.conf]164.49736 [persist.sys.mdlog_dumpback]=[2]164.49750 [persist.sys.minfree_3g]=[73728,92160,110592,154832,409424,579072]164.49766 [persist.sys.minfree_4g]=[73728,92160,110592,340000,510000,645120]164.49792 [persist.sys.minfree_6g]=[73728,92160,110592,340000,1282868,1677312]164.49808 Done
+[  164.053949]  (0)[5370:init]init 8: ReapLogC PropSet [persist.sys.minfree_def]=[73728,92160,110592,129024,276040,402560]164.49851 [persist.sys.mitalk.enable]=[true]164.49894 [persist.sys.periodic.enable]=[true]164.49908 [persist.sys.slab.threshold]=[256000,358400,460800,665600,819200]164.49924 [persist.sys.timezone]=[Asia/Shanghai]164.49939 [persist.sys.usb.config]=[none]164.49952 [persist.sys.watchdog_enhanced]=[true]164.49967 [persist.vendor.audio.button_jack.profile]=[volume]164.49988 [persist.vendor.audio.button_jack.switch]=[0]164.50004 [persist.vendor.camera3.pipeline.bufnum.base.imgo]=[4]164.50023 [persist.vendor.camera3.pipeline.bufnum.base.lcso]=[4]164.50040 [persist.vendor.camera3.pipeline.bufnum.base.rrzo]=[4]164.50057 [persist.vendor.camera3.pipeline.bufnum.base.rsso]=[4]164.50074 Done
+[  164.054159]  (0)[5370:init]init 8: ReapLogC PropSet [persist.vendor.camera3.pipeline.bufnum.min.high_ram.fdyuv]=[5]164.50136 [persist.vendor.camera3.pipeline.bufnum.min.high_ram.imgo]=[6]164.50155 [persist.vendor.camera3.pipeline.bufnum.min.high_ram.lcso]=[6]164.50173 [persist.vendor.camera3.pipeline.bufnum.min.high_ram.rrzo]=[6]164.50191 [persist.vendor.camera3.pipeline.bufnum.min.high_ram.rsso]=[6]164.50209 [persist.vendor.camera3.pipeline.bufnum.min.low_ram.fdyuv]=[5]164.50226 [persist.vendor.camera3.pipeline.bufnum.min.low_ram.imgo]=[5]164.50255 [persist.vendor.camera3.pipeline.bufnum.min.low_ram.lcso]=[5]164.50273 [persist.vendor.camera3.pipeline.bufnum.min.low_ram.rrzo]=[5]164.50290 [persist.vendor.camera3.pipeline.bufnum.min.low_ram.rsso]=[5]164.50308 Done
+[  164.054419]  (0)[5370:init]init 8: ReapLogC PropSet [persist.vendor.connsys.chipid]=[-1]164.50344 [persist.vendor.connsys.dynamic.dump]=[0]164.50360 [persist.vendor.connsys.fm_chipid]=[mt6631]164.50375 [persist.vendor.connsys.patch.version]=[-1]164.50390 [persist.vendor.heavy.loading.support]=[1]164.50406 [persist.vendor.ims_support]=[1]164.50421 [persist.vendor.log.tel_log_ctrl]=[1]164.50436 [persist.vendor.max.brightness]=[413]164.50452 [persist.vendor.mdlog.flush_log_ratio]=[72340194296137244]164.50471 [persist.vendor.mdlog.need_dump]=[1]164.50488 [persist.vendor.mims_support]=[2]164.50502 [persist.vendor.mtk.volte.enable]=[1]164.50519 [persist.vendor.mtk_ct_volte_support]=[1]164.50533 [persist.vendor.mtk_dynamic_ims_switch]=[1]164.50547 [persist.vendor.mtk_sim_switch_policy]=[2]164.50566 Done
+[  164.054671]  (0)[5370:init]init 8: ReapLogC PropSet [persist.vendor.mtk_wfc_support]=[1]164.50602 [persist.vendor.radio.fd.counter]=[150]164.50620 [persist.vendor.radio.fd.off.counter]=[50]164.50636 [persist.vendor.radio.fd.off.r8.counter]=[50]164.50652 [persist.vendor.radio.fd.r8.counter]=[150]164.50668 [persist.vendor.radio.msimmode]=[dsds]164.50682 [persist.vendor.radio.mtk_dsbp_support]=[2]164.50698 [persist.vendor.radio.mtk_ps2_rat]=[L/W/G]164.50713 [persist.vendor.radio.mtk_ps3_rat]=[G]164.50728 [persist.vendor.radio.smart.data.switch]=[1]164.50746 [persist.vendor.vilte_support]=[1]164.50759 [persist.vendor.viwifi_support]=[1]164.50774 [persist.vendor.volte_support]=[1]164.50788 [persist.vendor.vzw_device_type]=[0]164.50803 [persist.vendor.wfc.sys_wfc_support]=[1]164.50819 Done
+[  164.056096]  (0)[5370:init]init 8: ReapLogF PropSet [persist.vm.stackdump.threshold]=[0]164.50853 [pm.dexopt.ab-ota]=[speed-profile]164.50868 [pm.dexopt.bg-dexopt]=[speed-profile]164.50881 [pm.dexopt.boot]=[verify]164.50894 [pm.dexopt.first-boot]=[quicken]164.50908 [pm.dexopt.inactive]=[verify]164.50921 [pm.dexopt.install]=[speed-profile]164.50934 [pm.dexopt.shared]=[speed]164.50947 [qemu.hw.mainkeys]=[0]164.50959 Done
+[  164.056108]  (0)[5370:init]init 3: Could not set 'ro.vendor.mtk_data_config' to '1' while loading .prop filesRead-only property was already set
+[  164.056898]  (0)[5370:init]init 8: ReapLogC PropSet [security.perf_harden]=[1]164.52790 [setupwizard.feature.baseline_setupwizard_enabled]=[true]164.52821 [setupwizard.theme]=[glif_v3_light]164.52835 [sys.ipo.disable]=[1]164.52850 [sys.ipo.pwrdncap]=[2]164.52862 [sys.miui.shutdown.waittime]=[500]164.52876 [sys.paper_mode_max_level]=[255]164.52889 [vendor.camera.mdp.cz.enable]=[1]164.52907 [vendor.camera.mdp.dre.enable]=[0]164.52921 [vendor.connsys.driver.ready]=[no]164.52935 [vendor.display.enable_default_color_mode]=[0]164.52950 [vendor.mtk.vdec.waitkeyframeforplay]=[1]164.52966 [vendor.mtk_thumbnail_optimization]=[true]164.52980 [vendor.rild.libargs]=[-d /dev/ttyC0]164.53008 [vendor.rild.libpath]=[mtk-ril.so]164.53023 [wifi.direct.interface]=[p2p0]164.53037 Done
+[  164.057061]  (0)[5370:init]init 9: ReapLogF PropSet [wifi.interface]=[wlan0]164.53086 [wifi.tethering.interface]=[ap0]164.53126 Done
+[  164.057069]  (0)[5370:init]init 3: Setting product property ro.product.brand to 'Redmi' (from ro.product.vendor.brand)
+[  164.057098]  (0)[5370:init]init 3: Setting product property ro.product.device to 'dandelion' (from ro.product.vendor.device)
+[  164.057139]  (0)[5370:init]init 8: Setting product property ro.product.model to 'M2006C3LVG' (from ro.product.vendor.model)
+[  164.057167]  (0)[5370:init]init 8: Setting product property ro.product.name to 'dandelion_eea' (from ro.product.vendor.name)
+[  164.057194]  (0)[5370:init]init 8: Setting product property ro.product.marketname to 'Redmi 9AT' (from ro.product.vendor.marketname)
+[  164.057243]  (0)[5370:init]init 8: Setting property 'ro.build.fingerprint' to 'Redmi/dandelion_eea/dandelion:10/QP1A.190711.020/V12.0.5.0.QCDEUTI:user/release-keys'
+[  164.057285]  (0)[5370:init]init 8: board init prop hwc = VDF, init product_name = dandelion
+[  164.058220]  (0)[5370:init]init 9: ReapLogF PropSet [vendor.boot.hwc]=[VDF]164.53498 [vendor.boot.hwname]=[dandelion]164.53522 [vendor.boot.hwversion]=[1.49.0]164.53544 [persist.vendor.mims_support]=[2]164.54269 [persist.vendor.radio.smart.data.switch]=[1]164.54355 Done
+[  164.058228]  (0)[5370:init]init 8: Failed to umount /debug_ramdisk
+[  164.058964]  (0)[5370:init]init 8: Created socket '/dev/socket/property_service', mode 666, user 0, group 0
+[  164.059624]  (0)[5370:init]init 9: ReapLogF PropSet [sys.usb.controller]=[musb-hdrc]164.55296 Done
+[  164.059633]  (0)[5370:init]init 8: SetupMountNamespaces done
+[  164.061143]  (0)[5370:init]init 8: Forked subcontext for 'u:r:vendor_init:s0' with pid 70
+[  164.062694]  (0)[5370:init]init 15: Forked subcontext for 'u:r:vendor_init:s0' with pid 71
+[  164.062836]  (0)[5370:init]init 15: Parsing file /init.rc...
+[  164.063463]  (0)[5370:init]init 15: Parsing directory /system/etc/init...
+[  164.063529]  (0)[5370:init]init 15: Parsing file /product/etc/init...
+[  164.063561]  (0)[5370:init]init 15: Unable to read config file '/product/etc/init': open() failed: No such file or directory
+[  164.063587]  (0)[5370:init]init 15: Parsing file /product_services/etc/init...
+[  164.063614]  (0)[5370:init]init 15: Unable to read config file '/product_services/etc/init': open() failed: No such file or directory
+[  164.063635]  (0)[5370:init]init 15: Parsing file /odm/etc/init...
+[  164.063659]  (0)[5370:init]init 15: Unable to read config file '/odm/etc/init': open() failed: No such file or directory
+[  164.063699]  (0)[5370:init]init 8: Parsing directory /vendor/etc/init...
+[  164.064129]  (0)[5370:init]init 8: processing action (SetupCgroups) from (<Builtin Action>:0)
+[  164.066576]  (0)[5370:init]libprocessgroup 8: Failed to mount blkio cgroup: No such file or directory
+[  164.066598]  (0)[5370:init]libprocessgroup 8: Failed to setup blkio cgroup
+[  164.068385]  (0)[5370:init]libprocessgroup 8: Failed to mount memory cgroup: No such file or directory
+[  164.068405]  (0)[5370:init]libprocessgroup 8: Failed to setup memory cgroup
+[  164.070524]  (0)[5370:init]init 8: processing action (early-init) from (/init.rc:2)
+[  164.071599]  (0)[5370:init]init 8: processing action (wait_for_coldboot_done) from (<Builtin Action>:0)
+[  164.071656]  (0)[5370:init]init 8: wait for '/dev/.coldboot_done' took 0ms
+[  164.071801]  (0)[5370:init]init 16: processing action (MixHwrngIntoLinuxRng) from (<Builtin Action>:0)
+[  164.071953]  (0)[5370:init]init 16: /dev/hw_random not found
+[  164.072001]  (0)[5370:init]init 16: processing action (SetMmapRndBits) from (<Builtin Action>:0)
+[  164.072480]  (0)[5370:init]init 16: processing action (SetKptrRestrict) from (<Builtin Action>:0)
+[  164.072807]  (0)[5370:init]init 16: processing action (KeychordInit) from (<Builtin Action>:0)
+[  164.072856]  (0)[5370:init]init 16: processing action (console_init) from (<Builtin Action>:0)
+[  164.072951]  (0)[5370:init]init 16: processing action (StartBoringSslSelfTest) from (<Builtin Action>:0)
+[  164.074362]  (0)[5370:init]init 16: processing action (MixHwrngIntoLinuxRng) from (<Builtin Action>:0)
+[  164.074468]  (0)[5370:init]init 16: /dev/hw_random not found
+[  164.074550]  (0)[5370:init]init 8: processing action (InitBinder) from (<Builtin Action>:0)
+[  164.074802]  (0)[5370:init]init 8: processing action (late-init) from (/init.rc:5)
+[  164.074863]  (0)[5370:init]init 8: processing action (queue_property_triggers) from (<Builtin Action>:0)
+[  164.074912]  (0)[5370:init]init 8: processing action (post-fs-data) from (/init.rc:9)
+[  164.080695]  (0)[5370:init]init 8: processing action (boot) from (/init.rc:22)
+[  164.080911]  (0)[5370:init]init 8: starting service 'nvram_daemon'...
+[  164.080943]  (0)[5370:init]init 8: disable tcache globally, now we are starting nvram_daemon
+[  164.082702]  (4)[5442:init]init 17: disable tcache for nvram_daemon
+[  164.083460]  (0)[5370:init]init 8: starting service 'vendor.ccci_fsd'...
+[  164.085515]  (4)[5443:init]init 17: disable tcache for vendor.ccci_fsd
+[  164.085832]  (0)[5370:init]init 8: processing action (enable_property_trigger) from (<Builtin Action>:0)
+[  164.089589]  (1)[5370:init]init 17: Untracked pid 72 exited with status 0
+[  164.123745]  (2)[5370:init]init 9: ReapLogF PropSet [vendor.service.nvram_init]=[Ready]164.119835 Done
+[  164.123761]  (2)[5370:init]init 17: processing action (vendor.service.nvram_init=Ready) from (/init.rc:26)
+[  164.123906]  (2)[5370:init]init 17: starting service 'ccci_mdinit'...
+[  164.124205] -(4)[5210:sshd-session.pa]eth_start_xmit: 57 callbacks suppressed
+[  164.125696]  (3)[5451:init]init 8: disable tcache for ccci_mdinit
+[  164.158811]  (0)[5451:ccci_mdinit][ccci1/fsm]monitor node open by ccci_mdinit
+[  164.159494]  (0)[5451:ccci_mdinit][ccci1/chr]port ccci_ipc_5 open with flag 20002 by ccci_mdinit
+[  164.160746]  (2)[5452:ccci_mdinit][ccci1/ipc]Update fail
+[  164.161854]  (0)[5451:ccci_mdinit][ccci1/fsm]CCCI_IOC_RELOAD_MD_TYPE: 0x9
+[  164.162494]  (1)[5451:ccci_mdinit][ccci1/fsm]CCCI_IOC_GET_MD_TYPE: 9!
+[  164.163366]  (1)[5370:init]init 9: ReapLogF PropSet [vendor.mtk.md1.status]=[init]164.154683 [vendor.mtk.md1.status]=[reset]164.158461 [vendor.ril.active.md]=[9]164.158982 Done
+[  164.163380]  (1)[5370:init]init 17: Received control message 'start' for 'vendor.ccci_fsd' from pid: 82 (/vendor/bin/ccci_mdinit 0).
+[  164.163532]  (1)[5451:ccci_mdinit][ccci1/chr]port ccci_ccb_ctrl open with flag 20002 by ccci_mdinit
+[  164.163546]  (1)[5451:ccci_mdinit][ccci1/shm]ccb_configs_len: 20
+[  164.163629]  (1)[5451:ccci_mdinit][ccci1/shm]find ccb port ccci_ccb_dhl for user1!
+[  164.163692]  (1)[5451:ccci_mdinit][ccci1/chr]remap control addr:0x78018000 len:4096  map-len:4096
+[  164.163700]  (1)[5451:ccci_mdinit][ccci1/chr]remap succeed 78018, 0x78018000 -> 0xf5710000
+[  164.165463]  (1)[5451:ccci_mdinit][ccci1/chr]port ccci_ccb_ctrl close rx_len=0 empty=1, clear_cnt=0, drop=0
+[  164.165478]  (1)[5451:ccci_mdinit][ccci1/pot]critical user check: 0x0
+[  164.165556]  (1)[5451:ccci_mdinit][ccci1/chr]port ccci_ccb_ctrl open with flag 20002 by ccci_mdinit
+[  164.165567]  (1)[5451:ccci_mdinit][ccci1/shm]ccb_configs_len: 20
+[  164.165641]  (1)[5451:ccci_mdinit][ccci1/shm]find ccb port ccci_ccb_md_monitor for user2!
+[  164.165701]  (1)[5451:ccci_mdinit][ccci1/chr]remap control addr:0x78018000 len:4096  map-len:4096
+[  164.165708]  (1)[5451:ccci_mdinit][ccci1/chr]remap succeed 78018, 0x78018000 -> 0xf5710000
+[  164.165857]  (1)[5451:ccci_mdinit][ccci1/chr]port ccci_ccb_ctrl close rx_len=0 empty=1, clear_cnt=0, drop=0
+[  164.165866]  (1)[5451:ccci_mdinit][ccci1/pot]critical user check: 0x0
+[  164.165929]  (1)[5451:ccci_mdinit][ccci1/chr]port ccci_ccb_ctrl open with flag 20002 by ccci_mdinit
+[  164.165935]  (1)[5451:ccci_mdinit][ccci1/shm]ccb_configs_len: 20
+[  164.166003]  (1)[5451:ccci_mdinit][ccci1/shm]find ccb port ccci_ccb_meta for user3!
+[  164.166057]  (1)[5451:ccci_mdinit][ccci1/chr]remap control addr:0x78018000 len:4096  map-len:4096
+[  164.166062]  (1)[5451:ccci_mdinit][ccci1/chr]remap succeed 78018, 0x78018000 -> 0xf5710000
+[  164.166212]  (1)[5451:ccci_mdinit][ccci1/chr]port ccci_ccb_ctrl close rx_len=0 empty=1, clear_cnt=0, drop=0
+[  164.166221]  (1)[5451:ccci_mdinit][ccci1/pot]critical user check: 0x0
+[  164.179706]  (0)[5451:ccci_mdinit][ccci1/fsm]MD start ioctl called by ccci_mdinit
+[  164.179728]  (0)[5451:ccci_mdinit][ccci1/fsm]command 1 is appended 0 from ccci_fsm_ioctl
+[  164.179771]  (1)[217:ccci_fsm1][ccci1/fsm]command 1 process
+[  164.179780]  (1)[217:ccci_fsm1][ccci1/pot]ready to reset MD in normal mode
+[  164.179815]  (1)[217:ccci_fsm1][ccci1/fsm]md_state change from 0 to 2
+[  164.205702]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x00000000b389cf37, buf_size=213032,buflen=213032,rx_size=81920,tx_size=131072,ctr_len=40
+[  164.205754]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x00000000b389cf37)=0xee0000ee ee0000ee
+[  164.205760]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000a2baf492)=0xff0000ff ff0000ff
+[  164.205764]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x00000000d98ed5e2
+[  164.205884]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x000000008a1b72ad, buf_size=122920,buflen=122920,rx_size=81920,tx_size=40960,ctr_len=40
+[  164.205914]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x000000008a1b72ad)=0xee0000ee ee0000ee
+[  164.205920]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x0000000025c9e67f)=0xff0000ff ff0000ff
+[  164.205924]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x0000000096429be3
+[  164.206033]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x0000000024563b01, buf_size=49192,buflen=49192,rx_size=40960,tx_size=8192,ctr_len=40
+[  164.206048]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x0000000024563b01)=0xee0000ee ee0000ee
+[  164.206053]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000fbbc28a2)=0xff0000ff ff0000ff
+[  164.206057]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x00000000f95cc93c
+[  164.206169]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x000000004f22cac8, buf_size=122920,buflen=122920,rx_size=81920,tx_size=40960,ctr_len=40
+[  164.206198]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x000000004f22cac8)=0xee0000ee ee0000ee
+[  164.206203]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000054a1e6d)=0xff0000ff ff0000ff
+[  164.206207]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x000000000fb580c9
+[  164.206334]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x00000000a2b864c2, buf_size=41000,buflen=41000,rx_size=20480,tx_size=20480,ctr_len=40
+[  164.206348]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x00000000a2b864c2)=0xee0000ee ee0000ee
+[  164.206354]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000bddacaf7)=0xff0000ff ff0000ff
+[  164.206358]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x0000000065b811f6
+[  164.206466]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x000000005dd60a01, buf_size=41000,buflen=41000,rx_size=20480,tx_size=20480,ctr_len=40
+[  164.206480]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x000000005dd60a01)=0xee0000ee ee0000ee
+[  164.206486]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x0000000058ae771d)=0xff0000ff ff0000ff
+[  164.206490]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x0000000050b69bba
+[  164.206597]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x00000000d44fa2e9, buf_size=131112,buflen=131112,rx_size=65536,tx_size=65536,ctr_len=40
+[  164.206628]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x00000000d44fa2e9)=0xee0000ee ee0000ee
+[  164.206634]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000dcb2b21b)=0xff0000ff ff0000ff
+[  164.206638]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x00000000f9c24fc1
+[  164.206744]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x00000000036caeea, buf_size=40,buflen=40,rx_size=0,tx_size=0,ctr_len=40
+[  164.206750]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x00000000036caeea)=0xee0000ee ee0000ee
+[  164.206755]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000554e16ed)=0xff0000ff ff0000ff
+[  164.206759]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x000000007b3ad440
+[  164.206867]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x00000000f471e8bf, buf_size=24616,buflen=24616,rx_size=12288,tx_size=12288,ctr_len=40
+[  164.206877]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x00000000f471e8bf)=0xee0000ee ee0000ee
+[  164.206883]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000658afb04)=0xff0000ff ff0000ff
+[  164.206887]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x00000000c78aa2b4
+[  164.206894]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x0000000086cd7fd4, buf_size=65576,buflen=65576,rx_size=32768,tx_size=32768,ctr_len=40
+[  164.206911]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x0000000086cd7fd4)=0xee0000ee ee0000ee
+[  164.206917]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000bd0acee8)=0xff0000ff ff0000ff
+[  164.206921]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x00000000d47e204a
+[  164.206927]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x0000000089df7657, buf_size=16424,buflen=16424,rx_size=8192,tx_size=8192,ctr_len=40
+[  164.206936]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x0000000089df7657)=0xee0000ee ee0000ee
+[  164.206941]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000199c94a9)=0xff0000ff ff0000ff
+[  164.206945]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x000000002d976b54
+[  164.206951]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x000000009d822577, buf_size=40,buflen=40,rx_size=0,tx_size=0,ctr_len=40
+[  164.206957]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x000000009d822577)=0xee0000ee ee0000ee
+[  164.206962]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000f6acda0b)=0xff0000ff ff0000ff
+[  164.206966]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x000000007a57af11
+[  164.206972]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x000000007ec92613, buf_size=40,buflen=40,rx_size=0,tx_size=0,ctr_len=40
+[  164.206977]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x000000007ec92613)=0xee0000ee ee0000ee
+[  164.206983]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x000000009363babf)=0xff0000ff ff0000ff
+[  164.206987]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x0000000096029a46
+[  164.206993]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x00000000357867bb, buf_size=40,buflen=40,rx_size=0,tx_size=0,ctr_len=40
+[  164.206998]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x00000000357867bb)=0xee0000ee ee0000ee
+[  164.207004]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000586133d4)=0xff0000ff ff0000ff
+[  164.207008]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x00000000e022b033
+[  164.207014]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x00000000f3e33f80, buf_size=16424,buflen=16424,rx_size=8192,tx_size=8192,ctr_len=40
+[  164.207022]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x00000000f3e33f80)=0xee0000ee ee0000ee
+[  164.207028]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000ff77028a)=0xff0000ff ff0000ff
+[  164.207032]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x000000003b530b4b
+[  164.207038]  (1)[217:ccci_fsm1][ccci1/rbf]crb:buf=0x00000000134605c2, buf_size=40,buflen=40,rx_size=0,tx_size=0,ctr_len=40
+[  164.207043]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Header(0x00000000134605c2)=0xee0000ee ee0000ee
+[  164.207048]  (1)[217:ccci_fsm1][ccci1/rbf]crb:Footer(0x00000000fe4d286c)=0xff0000ff ff0000ff
+[  164.207053]  (1)[217:ccci_fsm1][ccci1/rbf]crb:rbf=0x000000009015b6fe
+[  164.207137]  (1)[217:ccci_fsm1][ccci1/mcd]ccci_set_clk_cg: on=1
+[  164.207155]  (1)[217:ccci_fsm1][ccci1/cif]md_ccif_sram_reset
+[  164.207182]  (1)[217:ccci_fsm1][ccci1/cif]md_ccif_switch_ringbuf
+[  164.207189]  (1)[217:ccci_fsm1][ccci1/cif]md_ccif_reset_queue
+[  164.207196]  (1)[217:ccci_fsm1][ccci1/cif]md_ccif_switch_ringbuf
+[  164.207200]  (1)[217:ccci_fsm1][ccci1/cif]md_ccif_reset_queue
+[  164.263942]  (0)[217:ccci_fsm1][ccci1/cldma]cldma_reset from md_cd_start
+[  164.263954]  (0)[217:ccci_fsm1][ccci1/cldma]cldma_start from md_cd_start
+[  164.317997]  (2)[261:kworker/2:2][ccci1/cif]md_ccif_sram_rx_work:dk_pkg=00000000c828724c, md_featrue=0000000000fe4112
+[  164.318049]  (2)[261:kworker/2:2][ccci1/cif]md_ccif_sram_rx_work:ccci_port_recv_skb ret=0
+[  164.318058]  (0)[226:ccci_ctrl][ccci1/fsm]control message 0x0,0x5555FFFF
+[  164.318074]  (0)[226:ccci_ctrl][ccci1/fsm]event 1 is appended from ccci_fsm_recv_control_packet
+[  164.319899] -(1)[217:ccci_fsm1][ccci1/fsm]md_state change from 2 to 3
+[  164.319968] -(1)[217:ccci_fsm1]mtk_rtc_hal_common: hal_rtc_get_spare_register: cmd[12], get rg[0x5b8, 0x1 , 6] = 0x0
+[  164.320069]  (0)[5443:ccci_fsd][ccci1/chr]port ccci_fs open with flag 20002 by ccci_fsd
+[  164.320086] -(1)[217:ccci_fsm1][ccci1/mcd]md_boot_stats len 0
+[  164.320092] -(1)[217:ccci_fsm1][ccci1/mcd]md_boot_stats0:0x54430007
+[  164.320098] -(1)[217:ccci_fsm1][ccci1/mcd]md_boot_stats1:0x53320000
+[  164.320110] -(1)[217:ccci_fsm1][ccci1/fsm]event 1 is completed by fsm_main_thread
+[  164.320166]  (1)[217:ccci_fsm1][MDPM] AP2MD1 section level, 2G: 0xdae7bf(0xdae7bf), 3G: 0x97c676(0x97c676), 
+[  164.320170]  (1)[217:ccci_fsm1][MDPM] 4G_upL1:0x56c696(0x56c696),4G_upL2:0x56c696(0x56c696),TDD:0xd84a75(0xd84a75),addr:0x00000000792e4d57
+[  164.320175]  (1)[217:ccci_fsm1][MDPM] 4G_upL1: 0x56c696(0x56c696), TDD: 0xd84a75(0xd84a75), addr: 0x00000000792e4d57
+[  164.320177]  (1)[217:ccci_fsm1][MDPM] C2K section level, C2K: 0x108d2d7(0x108d2d7), addr: 0x00000000792e4d57
+[  164.320186]  (1)[217:ccci_fsm1][ccci1/fsm]send runtime data 0
+[  164.379853]  (0)[5370:init]init 9: ReapLogT PropSet [vendor.mtk.md1.status]=[bootup]164.175665 Done
+[  164.512155]  (0)[219:ccci_rpc_k][ccci0/rpc]get_md_dtsi_val 1, mediatek,md_product_name_model_id -- 0xf0f0f0f
+[  164.628860]  (0)[166:kworker/0:1]amms_work_handler:addr = 0x0x000000008f590000 length=0x0x0000000000340000
+[  164.629243]  (0)[166:kworker/0:1]Freeing modem memory: 3328K from phys 8f590000
+[  164.629246]  (0)[166:kworker/0:1]free_reserved_memory: 0x8f590000 ~ 0x8f8d0000
+[  164.674766]  (0)[226:ccci_ctrl][ccci1/fsm]control message 0x0,0x0
+[  164.674786]  (0)[226:ccci_ctrl][ccci1/fsm]event 4 is appended from ccci_fsm_recv_control_packet
+[  164.683885] -(3)[217:ccci_fsm1][ccci1/fsm]md_state change from 3 to 4
+[  164.683981] -(3)[217:ccci_fsm1][ccci1/fsm]event 4 is completed by fsm_main_thread
+[  164.684042]  (3)[217:ccci_fsm1][ccci1/fsm]command 1 is completed 1 by fsm_main_thread
+[  164.685394]  (1)[5370:init]init 9: ReapLogF PropSet [vendor.mtk.md1.status]=[ready]164.680787 Done
+[  164.685407]  (1)[5370:init]init 17: Received control message 'start' for 'emdlogger1' from pid: 82 (/vendor/bin/ccci_mdinit 0). Could not find 'emdlogger1' for ctl.start
+[  164.696216]  (0)[5370:init]init 17: Received control message 'start' for 'vendor.gsm0710muxd' from pid: 82 (/vendor/bin/ccci_mdinit 0). Could not find 'vendor.gsm0710muxd' for ctl.start
+[  164.696691]  (1)[61:conn-md-thread][CONN-MD-DFT][W]conn_md_thread:user (0x80000003) not ready, drop ilm msg
+[  164.762678]  (0)[219:ccci_rpc_k][ccci0/rpc]get_md_dtsi_val 1, mediatek,md_drdi_rf_set_idx -- 0x9
+[  164.776033]  (0)[225:ccci_sys][ccci1/sys]system message (ffffffff 110 2 0)
+[  164.776051]  (0)[225:ccci_sys][ccci1/sys]swtp_send_tx_power_mode send swtp to md ret=0, mode=0, rety_cnt=0
+[  164.831921]  (6)[243:mtk_io_boost]failed to open task file, ret=-2
+[  164.831998]  (3)[263:kworker/u16:4][Thermal/TZ/BTS]wakeup_ta_algo out of memory
+[  164.832170]  (7)[266:kworker/u16:7][CH3_DBG] bat_cur = -3
+[  164.832310] -(4)[104:kworker/u16:2]mt635x_auxadc_read_raw: 15 callbacks suppressed
+[  164.832320]  (4)[104:kworker/u16:2]mt635x-auxadc mt-pmic:mt635x-auxadc: name:VPROC_TEMP, channel=4, adc_out=0x604, adc_result=676
+[  164.832930]  (4)[266:kworker/u16:7]mt635x-auxadc mt-pmic:mt635x-auxadc: name:BAT_TEMP, channel=3, adc_out=0x832, adc_result=921
+[  164.833314]  (5)[5:kworker/u16:0]mt635x-auxadc mt-pmic:mt635x-auxadc: name:VCORE_TEMP, channel=4, adc_out=0x5fe, adc_result=674
+[  166.358815]  (5)[0:swapper/5]Power/swap DP: No enter --- SODI3: No enter --- SODI: No enter --- 
+[  166.358877]  (1)[0:swapper/1]mcdi cpu: 0, 0, 0, 0, 0, 0, 0, 0, cluster : 0, 0, pause = 0, multi core = 0, latency = 0, residency = 0, last core = 0, avail cpu = 00ff, cluster = 0003, enabled = 1, max_s_state = 5, system_idle_hint = 00000000
+[  166.359213] -(6)[5210:sshd-session.pa]eth_start_xmit: 53 callbacks suppressed
+[  167.711911]  (4)[302:kworker/4:1]usb_state<CONFIGURED>
+[  167.713670]  (0)[108:dlpt_notify_thr]mt635x-auxadc mt-pmic:mt635x-auxadc: name:ISENSE, channel=0, adc_out=0x67a9, adc_result=4373
+[  167.717207]  (0)[108:dlpt_notify_thr][MDRT_ADC] OLD = 0x3f6d, NOW = 0x3f82, CNT = 0
+[  167.717216]  (0)[108:dlpt_notify_thr]mt635x-auxadc mt-pmic:mt635x-auxadc: name:BATADC, channel=0, adc_out=0x688a, adc_result=4410
+[  167.717219]  (0)[108:dlpt_notify_thr][PBM] [ma_to_mw] 4410(mV) * 5500(mA) = 24255(mW)
+[  167.717230]  (0)[108:dlpt_notify_thr][DLPT_final] 5500,-1,-1,1,5500
+[  169.951933]  (6)[266:kworker/u16:7][Thermal/TZ/BTS]wakeup_ta_algo out of memory
+[  169.952149]  (7)[104:kworker/u16:2][CH3_DBG] bat_cur = 18
+[  169.952225]  (5)[5:kworker/u16:0]mt635x-auxadc mt-pmic:mt635x-auxadc: name:VCORE_TEMP, channel=4, adc_out=0x5ff, adc_result=674
+[  169.952801]  (5)[104:kworker/u16:2]mt635x-auxadc mt-pmic:mt635x-auxadc: name:BAT_TEMP, channel=3, adc_out=0x831, adc_result=921
+[  169.953191]  (6)[266:kworker/u16:7]mt635x-auxadc mt-pmic:mt635x-auxadc: name:VPROC_TEMP, channel=4, adc_out=0x607, adc_result=678
+[  169.985523] -(4)[0:swapper/4][ccci1/fsm]command 4 is appended 0 from ccci_fsm_recv_md_interrupt
+[  169.985575]  (3)[217:ccci_fsm1][ccci1/fsm]command 4 process
+[  169.985586]  (3)[217:ccci_fsm1][ccci1/fsm]exception 4, from fsm_main_thread
+[  169.985595]  (3)[217:ccci_fsm1][ccci1/fsm]md_state change from 4 to 5
+[  169.985689]  (3)[217:ccci_fsm1][ccci1/mcd]MD exception HIF 0

@@ -1,0 +1,7 @@
+[Unit]
+Description=The Sxmo wallpaper as a service
+
+[Service]
+Type=simple
+Restart=on-failure
+ExecStart=sxmo_bg.sh max

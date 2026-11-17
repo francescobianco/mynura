@@ -1,0 +1,4 @@
+# Su questo kernel l'interfaccia USB del telefono si chiama rndis0, non usb0,
+# e ha l'indirizzo 172.16.42.1: il servizio unudhcpd.usb0 non risponde mai.
+UNUDHCPD_SERVER="172.16.42.1"
+UNUDHCPD_CLIENT="172.16.42.2"

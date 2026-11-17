@@ -60,6 +60,8 @@ else
     echo "Ti chiederà una password per l'utente del telefono."
     clean_mounts
     pmb config ui "$ui"
+    # strace serve a capire perché bonsaid non parte: da togliere a port finito
+    pmb config extra_packages strace
     pmb install --zap
 
     step "2/4 boot.img con footer AVB"

@@ -3,7 +3,7 @@
 
 pkgname=linux-xiaomi-dandelion
 pkgver=4.9.190
-pkgrel=4
+pkgrel=6
 pkgdesc="Xiaomi Redmi 9A kernel fork"
 arch="aarch64"
 _carch="arm64"
@@ -56,6 +56,18 @@ prepare() {
 		-e 's/temp_t2_thres = <15>/temp_t2_thres = <17>/' \
 		-e 's/temp_t2_thres_plus_x_degree = <16>/temp_t2_thres_plus_x_degree = <18>/' \
 		arch/arm64/boot/dts/mediatek/mt6765.dts
+	# Se il telefono si accende col cavo inserito, LK passa la modalità 8
+	# (ricarica a telefono spento, KPOC) e il driver del caricatore spegne
+	# tutto appena si stacca la USB. Per noi è sempre un avvio normale.
+	sed -i 's/^\t\tg_boot_mode = tags->bootmode;$/&\n\t\tif (g_boot_mode == KERNEL_POWER_OFF_CHARGING_BOOT ||\n\t\t    g_boot_mode == LOW_POWER_OFF_CHARGING_BOOT)\n\t\t\tg_boot_mode = NORMAL_BOOT;/' \
+		drivers/misc/mediatek/boot/mtk_boot_common.c
+	grep -q "g_boot_mode = NORMAL_BOOT;" drivers/misc/mediatek/boot/mtk_boot_common.c
+	# Quando il modem va in eccezione, il driver ccci salva i registri CLDMA con un
+	# ciclo byte per byte che il compilatore trasforma in memcpy: sulla memoria dei
+	# dispositivi è un alignment fault (Oops 96000021) e il telefono si riavvia.
+	sed -i 's/^\t\t\tbuf\[j\] = \*curr_ch_p;$/\t\t\tbuf[j] = *(volatile unsigned char *)curr_ch_p;/' \
+		drivers/misc/mediatek/ccci_util/ccci_private_log.c
+	[ "$(grep -c 'volatile unsigned char \*)curr_ch_p' drivers/misc/mediatek/ccci_util/ccci_private_log.c)" = 2 ]
 	. downstreamkernel_prepare
 }
 

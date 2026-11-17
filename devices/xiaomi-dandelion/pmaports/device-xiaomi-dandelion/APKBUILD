@@ -2,7 +2,7 @@
 pkgname=device-xiaomi-dandelion
 pkgdesc="Xiaomi Redmi 9A / 9AT"
 pkgver=1
-pkgrel=7
+pkgrel=10
 url="https://postmarketos.org"
 license="MIT"
 arch="aarch64"
@@ -23,6 +23,9 @@ source="
 	upower-dandelion.conf
 	focaltech_ts_fw_helitai.bin
 	30-touch-firmware.files
+	sxmo_bg.service
+	logind-dandelion.conf
+	unudhcpd-rndis0.confd
 "
 
 build() {
@@ -39,8 +42,21 @@ package() {
 		"$pkgdir"/usr/bin/sxmo_deviceprofile_mediatek,MT6765.sh
 	install -Dm644 "$srcdir"/sxmo_autosuspend.service \
 		"$pkgdir"/etc/superd/services/sxmo_autosuspend.service
+	# Lo sfondo intero, senza tagliare i lati: lo schermo è più stretto dell'immagine
+	install -Dm644 "$srcdir"/sxmo_bg.service \
+		"$pkgdir"/etc/superd/services/sxmo_bg.service
 	install -Dm644 "$srcdir"/upower-dandelion.conf \
 		"$pkgdir"/etc/UPower/UPower.conf.d/90-dandelion.conf
+	# Pressione breve del tasto di accensione a Sxmo, non a elogind (che spegnerebbe)
+	install -Dm644 "$srcdir"/logind-dandelion.conf \
+		"$pkgdir"/etc/elogind/logind.conf.d/90-dandelion.conf
+	# DHCP sull'interfaccia USB vera (rndis0): senza, dopo aver ricollegato il cavo
+	# il PC non riceve più l'indirizzo
+	install -Dm644 "$srcdir"/unudhcpd-rndis0.confd \
+		"$pkgdir"/etc/conf.d/unudhcpd.rndis0
+	install -d "$pkgdir"/etc/init.d "$pkgdir"/etc/runlevels/default
+	ln -s unudhcpd "$pkgdir"/etc/init.d/unudhcpd.rndis0
+	ln -s /etc/init.d/unudhcpd.rndis0 "$pkgdir"/etc/runlevels/default/unudhcpd.rndis0
 	# Firmware del touch FT8006S-AA, estratto dalla partizione vendor del telefono
 	install -Dm644 "$srcdir"/focaltech_ts_fw_helitai.bin \
 		"$pkgdir"/lib/firmware/focaltech_ts_fw_helitai.bin
@@ -58,4 +74,7 @@ c8a2d57a37ca538ec3fb8b974585d41c4b0e7feb28adcc0b880da46de9aff7cba9ee45d7fce2a3ec
 d350dc085a84b4ee469861fe5286b111d0186eb0539773467adaaa9ba454efb6bcbbb5a728de3281e84024972564b36ba9651d9e86c7cd09f44f95807a9d210c  upower-dandelion.conf
 ef5fb971d1fac6d49f5f7a23312aad6f559c062b6202b9e47f69890fa6dbcf3a9dc6145874ed997577f47a8a7645476390d3190b0667009b347647e9b344607e  focaltech_ts_fw_helitai.bin
 2a620616b7d4153c7c150727cc25052fcecb97b0f3ca35211a34654007a9992a57b45914f7a086299e4ede7f734bbf728cdc01c10a6d35aeba0d405955eddc01  30-touch-firmware.files
+2e251db1a939bbb430ee658cdc7c77eb3800457f5bd6022785228554b27c56b6a7fe4a6566be67bfbbacc25c544b4882f9ccba978c9b2d322982f73e7a0827ab  sxmo_bg.service
+5a8a08953b5032d421724dc32eb78541a5eb27fcfea382e5d0f7ec75f31c050df3516771d94ac7cec7833538bb5037df4b126a391ea187b6c2581b1b9eb02e76  logind-dandelion.conf
+fd975fa2a2fbf1ef3ced9a192473af970d36e7aacfa819c6dfa73cf0a17fa31280bb8b3b59365dfb7d2619c0d725f2593b0e61bfc312c7136a0e4beff7e22c9e  unudhcpd-rndis0.confd
 "
