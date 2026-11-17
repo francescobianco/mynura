@@ -13,6 +13,11 @@
  *   oparam <k=v;...>    set_parameters dello stream di uscita
  *   play <file.raw>     scrive PCM 16 bit sullo stream di uscita
  *   close               chiude lo stream di uscita
+ *   patch <src> <sink>  create_audio_patch da dispositivo a dispositivo (tipi in esadecimale), come fa
+ *                       Android 10 in chiamata: 80000040 (rete) -> 2 (altoparlante), 80000004 (microfono) -> 10000 (rete)
+ *   mixpatch <sink>     create_audio_patch dallo stream di uscita aperto (handle 13) a un dispositivo
+ *   unpatch <handle>    release_audio_patch
+ *   unpatchall          rilascia tutte le patch create
  *   sleep <s>
  *   quit
  * Costruzione: vedi build.sh
@@ -96,6 +101,26 @@ struct audio_stream_out {
 	int (*set_volume)(struct audio_stream_out *, float, float);
 	ssize_t (*write)(struct audio_stream_out *, const void *, size_t);
 };
+struct audio_gain_config {
+	int index;
+	uint32_t mode, channel_mask;
+	int values[32];
+	unsigned int ramp_duration_ms;
+};
+struct audio_port_config {
+	int id;
+	uint32_t role, type; /* ruolo: 1 sorgente, 2 destinazione; tipo: 1 dispositivo, 2 mix */
+	unsigned int config_mask;
+	unsigned int sample_rate;
+	uint32_t channel_mask, format;
+	struct audio_gain_config gain;
+	uint32_t flags;
+	union {
+		struct { int hw_module; uint32_t type; char address[32]; } device;
+		struct { int hw_module; int handle; int usecase; } mix;
+		struct { int session; } session;
+	} ext;
+};
 struct audio_hw_device {
 	struct hw_device_t common;
 	uint32_t (*get_supported_devices)(const struct audio_hw_device *);
@@ -113,7 +138,27 @@ struct audio_hw_device {
 				  uint32_t flags, struct audio_config *, struct audio_stream_out **,
 				  const char *address);
 	void (*close_output_stream)(struct audio_hw_device *, struct audio_stream_out *);
+	int (*open_input_stream)(struct audio_hw_device *, int, uint32_t, struct audio_config *,
+				 void **, uint32_t, const char *, uint32_t);
+	void (*close_input_stream)(struct audio_hw_device *, void *);
+	int (*get_microphones)(const struct audio_hw_device *, void *, size_t *);
+	int (*dump)(const struct audio_hw_device *, int);
+	int (*set_master_mute)(struct audio_hw_device *, bool);
+	int (*get_master_mute)(struct audio_hw_device *, bool *);
+	int (*create_audio_patch)(struct audio_hw_device *, unsigned int, const struct audio_port_config *,
+				  unsigned int, const struct audio_port_config *, int *handle);
+	int (*release_audio_patch)(struct audio_hw_device *, int handle);
 };
+
+static void port_device(struct audio_port_config *p, uint32_t role, uint32_t type)
+{
+	p->id = 0;
+	p->role = role;
+	p->type = 1; /* AUDIO_PORT_TYPE_DEVICE */
+	p->config_mask = 0;
+	p->ext.device.hw_module = 10; /* handle del modulo primario, come in audioserver */
+	p->ext.device.type = type;
+}
 
 /* ---- avvio senza crtbegin: bionic __libc_init ---- */
 struct structors { void (**preinit)(void); void (**init)(void); void (**fini)(void); };
@@ -133,6 +178,12 @@ __attribute__((naked, noreturn)) void _start(void)
 /* ---- shell ---- */
 static struct audio_hw_device *dev;
 static struct audio_stream_out *out;
+static int patches[16], npatches;
+
+static void keep_patch(int r, int h)
+{
+	if (!r && npatches < 16) patches[npatches++] = h;
+}
 
 static char *arg(char *s)
 {
@@ -213,6 +264,32 @@ int main(int argc, char **argv, char **envp)
 			if (out) dev->close_output_stream(dev, out);
 			out = 0;
 			printf("chiuso\n");
+		} else if (!strncmp(line, "patch ", 6)) {
+			char *p = a;
+			struct audio_port_config src = { 0 }, sink = { 0 };
+			int h = 0;
+			port_device(&src, 1, strtoul(p, &p, 16));
+			port_device(&sink, 2, strtoul(p, &p, 16));
+			r = dev->create_audio_patch(dev, 1, &src, 1, &sink, &h);
+			keep_patch(r, h);
+			printf("create_audio_patch %x->%x: %d handle %d\n", src.ext.device.type,
+			       sink.ext.device.type, r, h);
+		} else if (!strncmp(line, "mixpatch ", 9)) {
+			struct audio_port_config src = { 0 }, sink = { 0 };
+			int h = 0;
+			src.role = 1; src.type = 2; /* sorgente: mix (stream di uscita) */
+			src.ext.mix.hw_module = 10; src.ext.mix.handle = 13;
+			port_device(&sink, 2, strtoul(a, 0, 16));
+			r = dev->create_audio_patch(dev, 1, &src, 1, &sink, &h);
+			keep_patch(r, h);
+			printf("create_audio_patch mix->%x: %d handle %d\n", sink.ext.device.type, r, h);
+		} else if (!strncmp(line, "unpatchall", 10)) {
+			while (npatches > 0) {
+				int h = patches[--npatches];
+				printf("release_audio_patch %d: %d\n", h, dev->release_audio_patch(dev, h));
+			}
+		} else if (!strncmp(line, "unpatch ", 8)) {
+			printf("release_audio_patch: %d\n", dev->release_audio_patch(dev, (int)strtoul(a, 0, 0)));
 		} else if (!strncmp(line, "sleep ", 6)) {
 			usleep((unsigned)(strtod(a, 0) * 1e6));
 			printf("ok\n");
