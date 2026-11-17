@@ -42,7 +42,10 @@ SIM (`+CMTI: "SM", <indice>`): `[[at AT+CMGF=1]]` e `[[at AT+CMGR=<indice>]]`, p
   `~/Develop/_/piper` (github.com/francescobianco/piper): `config/pronuncia.tsv` (una riga
   `parola<TAB>grafia da leggere`, parola intera, senza distinguere maiuscole) e `config/lettura.json`
   (`length_scale`: più alto è più lento; `sentence_silence`).
-- Quando Francesco dice che pronunci male qualcosa e spiega come dovrebbe suonare:
+- Quando Francesco dice che pronunci male qualcosa e spiega come dovrebbe suonare, usa l'azione
+  `[[pronuncia PAROLA | GRAFIA]]`: il ponte aggiorna il dizionario, lo copia subito sul telefono e fa commit e push
+  nel repository piper. Poi di' una frase con la parola, così si sente la correzione. Per cambiamenti più ampi
+  (velocità in `config/lettura.json`, note in `docs/PRONUNCIA.md`) usa gli strumenti:
   1. scrivi la grafia: accenti per le vocali aperte o toniche (`còpp-pia`), trattini e doppie per allungare,
      sigle con le lettere separate come si leggono in italiano;
   2. prova con `~/Develop/_/piper/bin/pronuncia "frase di prova"` (testo corretto e fonemi);

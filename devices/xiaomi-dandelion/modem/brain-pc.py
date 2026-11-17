@@ -52,7 +52,12 @@ VOICE = (
 ACTIONS_COMMON = (
     ' Puoi agire sul telefono da cui parli scrivendo un\'azione tra doppie parentesi quadre, su una riga a parte: '
     'il sistema la esegue dopo aver letto le frasi che la precedono, e non viene letta ad alta voce. '
-    '[[riaggancia]] chiude questa chiamata: usala quando chi chiama vuole chiudere o te lo chiede, dopo un saluto breve.'
+    '[[riaggancia]] chiude questa chiamata: usala quando chi chiama vuole chiudere o te lo chiede, dopo un saluto breve. '
+    '[[pronuncia PAROLA | GRAFIA]] corregge come pronunci una parola in tutte le frasi successive: usala quando chi '
+    'chiama dice che pronunci male qualcosa e spiega come deve suonare. GRAFIA è come la scriveresti in italiano per '
+    'farla suonare così, con l\'accento grave sulla vocale tonica (per esempio Piper all\'inglese è Pàiper, una sigla '
+    'è lettera per lettera come "pi ci"). Dopo l\'azione di\' una frase breve che contiene la parola, così si sente '
+    'subito la correzione. Non promettere mai correzioni senza usare l\'azione.'
 )
 ACTIONS_OPS = (
     ' Nella sessione operativa puoi anche: [[chiama +39NUMERO]] per comporre un numero (la chiamata in corso va in '
@@ -82,12 +87,20 @@ SENTENCE = re.compile(r'(.+?[.!?…:;])\s+', re.S)  # fine frase: punteggiatura 
 TAG = re.compile(r'\[\[\s*(.+?)\s*\]\]', re.S)  # azione sul telefono: [[riaggancia]], [[chiama +39...]]
 
 
-def parse_action(cmd, unlocked):
+def parse_action(cmd, unlocked, caller_ok=False):
     """Testo dell'azione -> (azione per il telefono, None) oppure (None, frase da dire se non è permessa)."""
     word, _, rest = cmd.strip().partition(' ')
     word, rest = word.lower(), rest.strip()
     if word in ('riaggancia', 'chiudi'):
         return {'type': 'hangup'}, None
+    if word == 'pronuncia':
+        # Modifica innocua: basta il numero autorizzato, senza parola d'ordine
+        if not (unlocked or caller_ok):
+            return None, 'Per cambiare la pronuncia mi serve prima la parola d\'ordine.'
+        parola, _, grafia = rest.partition('|')
+        parola, grafia = ' '.join(parola.split()), ' '.join(grafia.split())
+        if 0 < len(parola) <= 40 and 0 < len(grafia) <= 60 and '\t' not in parola + grafia:
+            return {'type': 'pronuncia', 'parola': parola, 'grafia': grafia}, None
     if word in ('chiama', 'sms', 'at') and not unlocked:
         return None, 'Per questo mi serve prima la parola d\'ordine.'
     if word == 'chiama':
@@ -181,8 +194,11 @@ def answer(sess, qid, text, phone, seq0=0):
 
     def act(cmd):
         nonlocal seq
-        action, refusal = parse_action(cmd, sess.unlocked)
-        if action:
+        action, refusal = parse_action(cmd, sess.unlocked, getattr(sess, 'caller_ok', False))
+        if action and action['type'] == 'pronuncia':
+            set_pronuncia(action['parola'], action['grafia'])  # sul PC; il telefono riceve il dizionario subito
+            log(f'   pronuncia: {action["parola"]} -> {action["grafia"]}')
+        elif action:
             phone.send({'id': qid, 'seq': seq, 'text': '', 'action': action, 'final': False})
             log(f'-> [{seq} azione] {action}')
             seq += 1
@@ -242,6 +258,34 @@ PIPER_REPO = os.path.expanduser(CONF.get('piper_repo', '~/Develop/_/piper'))
 PIPER_FILES = ['pronuncia.py', 'config/pronuncia.tsv', 'config/lettura.json']
 
 
+def push_pronuncia(files):
+    r = subprocess.run(['tar', '-C', PIPER_REPO, '-cf', '-'] + files, capture_output=True)
+    return subprocess.run(SSH + ['mkdir -p ~/piper/config && tar -C ~/piper -xf -'], input=r.stdout,
+                          capture_output=True).returncode == 0
+
+
+def set_pronuncia(parola, grafia):
+    """Aggiunge o cambia una voce del dizionario, la copia subito sul telefono, poi commit e push in background."""
+    tsv = os.path.join(PIPER_REPO, 'config', 'pronuncia.tsv')
+    lines = open(tsv, encoding='utf-8').read().splitlines()
+    key = parola.lower()
+    lines = [l for l in lines if l.startswith('#') or '\t' not in l or l.split('\t', 1)[0].strip().lower() != key]
+    lines.append(f'{parola}\t{grafia}')
+    with open(tsv, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines) + '\n')
+    push_pronuncia(['config/pronuncia.tsv'])  # prima che il telefono sintetizzi la frase successiva
+
+    def publish():
+        g = ['git', '-C', PIPER_REPO]
+        subprocess.run(g + ['add', 'config/pronuncia.tsv'], capture_output=True)
+        msg = (f'{parola} si legge {grafia}\n\nCorrezione chiesta a voce durante una chiamata con Nura.\n\n'
+               'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>')
+        c = subprocess.run(g + ['commit', '-q', '-m', msg], capture_output=True)
+        p = subprocess.run(g + ['push', '-q', 'origin', 'HEAD'], capture_output=True)
+        log(f'   pronuncia pubblicata: commit {c.returncode == 0}, push {p.returncode == 0}')
+    threading.Thread(target=publish, daemon=True).start()
+
+
 def sync_pronuncia():
     """Copia sul telefono (~/piper) i file di pronuncia quando cambiano nel repository: convo.py li rilegge."""
     seen = {}
@@ -256,9 +300,7 @@ def sync_pronuncia():
                 seen[f] = m
                 changed.append(f)
         if changed:
-            r = subprocess.run(['tar', '-C', PIPER_REPO, '-cf', '-'] + changed, capture_output=True)
-            ok = subprocess.run(SSH + ['mkdir -p ~/piper/config && tar -C ~/piper -xf -'], input=r.stdout,
-                                capture_output=True).returncode == 0
+            ok = push_pronuncia(changed)
             log(f'pronuncia copiata sul telefono ({ok}): {" ".join(changed)}')
         time.sleep(1)
 
@@ -286,6 +328,7 @@ def main():
         found, text = find_passphrase(q['text'])
         log(f'<- {text}')
         caller_ok = re.sub(r'\D', '', q.get('caller', ''))[-10:] in CALLERS
+        sess.caller_ok = caller_ok
         if found and not sess.unlocked:
             if not caller_ok:
                 log('   parola d\'ordine da un numero non autorizzato: resto bloccato')

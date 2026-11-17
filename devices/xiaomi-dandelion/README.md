@@ -141,6 +141,19 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-17 — 🔤 Correzione della pronuncia a voce con l'azione [[pronuncia]] (Claude per @francesco)
+
+- In chiamata @francesco ha chiesto di pronunciare «Piper» all'inglese. La sessione bloccata ha risposto che non
+  poteva perché «la voce la gestisce il telefono» (falso) e ha promesso «d'ora in poi dirò Pai-per» senza poterlo
+  fare. Lara (moglie di @francesco) aveva notato un accento del sud o sardo.
+- Nuova azione `[[pronuncia PAROLA | GRAFIA]]`, eseguita dal ponte sul PC: aggiorna `config/pronuncia.tsv` del
+  repository piper, lo copia **subito** sul telefono (prima della frase successiva), poi commit e push in
+  background. Basta il numero autorizzato, senza parola d'ordine: è una modifica innocua. Le istruzioni di Claude
+  vietano di promettere correzioni senza usare l'azione.
+- Correzione applicata: `Piper` → `Pàiper` (espeak-ng: `pipˈɛr` → `pˈaɪper`).
+- Riconoscimento: con una voce diversa e più lontana (Lara, in vivavoce) Vosk piccolo capisce poco; è il limite
+  principale. Prossimo passo proposto: riconoscimento sul PC con il modello italiano grande.
+
 ### 2026-11-17 — ↩️ Azioni sul telefono dal canale della chiamata, l'assistente si chiama Piper (Claude per @francesco)
 
 - Richiesta di @francesco: la sessione non deve ricollegarsi al telefono via SSH per chiudere la chiamata, farne
