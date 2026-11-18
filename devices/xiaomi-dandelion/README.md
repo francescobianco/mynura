@@ -156,6 +156,9 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
   dirlo e basta; conferma a voce prima di mandare messaggi o chiudere lavoro non salvato.
 - Limite: al primo screenshot lo schermo era **bloccato** (schermata con l'orologio di GNOME): finché resta bloccato
   il computer use non può agire, e lo sblocco richiede la password, esclusa.
+- **Lasciato aperto** (decisione di @francesco, 2026-11-18): non si sceglie ancora come gestire il blocco dello
+  schermo (togliere il blocco automatico, sbloccarlo a mano quando serve, oppure solo browser) e il computer use non
+  è stato provato in chiamata. Il codice resta com'è, da riprendere più avanti.
 
 ### 2026-11-18 — 🧠 Cervello piccolo sul telefono con llama.cpp, avviato solo se serve (Claude per @francesco)
 
@@ -223,6 +226,8 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
 - **Internet sul telefono**: verificare sia il Wi-Fi locale sia la connessione dati della SIM. Da fare più avanti:
   il credito è poco e non va consumato adesso.
+- **Computer use sul PC**: codice pronto (`pc-desktop.py`, Chrome), manca la scelta sul blocco dello schermo e la
+  prova in chiamata.
 - **VPS di emergenza**: se la connessione fisica con il PC cade, il telefono deve poter avviare una sessione di
   Claude Code su una VPS preparata, raggiungibile via SSH, anche per necessità in tempo reale. Idea: il telefono
   apre lui la connessione verso la VPS (tunnel SSH inverso, così la VPS raggiunge il telefono come oggi il PC) e
