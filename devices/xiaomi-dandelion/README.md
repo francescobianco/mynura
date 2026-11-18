@@ -153,6 +153,11 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
   senza aspettare. Se cade l'SSH il ponte esce, così chi lo gestisce lo riavvia.
 - `modem/nura-brain.service`: il ponte come servizio utente di systemd (riavvio automatico). L'installazione la fa
   @francesco: comandi nel file.
+- **`modem/piper.sh`**, un comando unico da lanciare sul PC (anche via SSH da casa, con la VPN):
+  `avvia` controlla e avvia solo quello che manca, anche dopo un riavvio del telefono (contenitore e modem,
+  radio e registrazione, mtkaudio ricompilato se serve, convo.py, answer.py, ponte); `riavvia`, `ferma`, `stato`,
+  `log`. Sul telefono gli script stanno in `~/nura` (permanente, non più `/tmp`). Sul PC il ponte gira in un ciclo
+  che lo riavvia da solo e sopravvive alla chiusura di SSH (`~/nura-voice/brain.pid`, `brain.log`).
 
 ### 2026-11-17 — 🎙️ Trascrizione sul PC con il modello grande, il piccolo resta di riserva (Claude per @francesco)
 
