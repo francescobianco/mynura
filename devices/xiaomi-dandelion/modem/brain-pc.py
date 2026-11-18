@@ -160,10 +160,20 @@ class Session:
             notes = open(OPS_NOTES).read() if os.path.exists(OPS_NOTES) else ''
             cmd = BASE + ['--model', OPS_MODEL, '--resume', self.sid, '--permission-mode', 'auto',
                           '--append-system-prompt', UNLOCKED + '\n\n' + notes]
+            if CONF.get('chrome'):  # Claude in Chrome nel browser del PC (deviceId scelto da Francesco)
+                cmd += ['--chrome']
+                notes_chrome = (f'\n\nPer il browser usa Claude in Chrome sul browser con deviceId '
+                                f'{CONF["chrome"]} (select_browser con quel deviceId prima di ogni altra azione).')
+                cmd[cmd.index('--append-system-prompt') + 1] += notes_chrome
         else:
             cmd = BASE + ['--model', CHAT_MODEL, '--session-id', self.sid, '--tools', '', '--system-prompt', LOCKED]
+        # Desktop del PC per il computer use (pc-desktop.py), anche quando il ponte gira da SSH o in background
+        env = dict(os.environ, DISPLAY=CONF.get('display', ':0'))
+        xauth = os.path.expanduser(CONF.get('xauthority', f'/run/user/{os.getuid()}/gdm/Xauthority'))
+        if os.path.exists(xauth):
+            env['XAUTHORITY'] = xauth
         self.p = subprocess.Popen(cmd, cwd=WORKDIR, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=subprocess.DEVNULL, text=True, bufsize=1)
+                                  stderr=subprocess.DEVNULL, text=True, bufsize=1, env=env)
 
     def kill(self):
         self.p.kill()

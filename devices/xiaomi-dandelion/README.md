@@ -141,6 +141,22 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-18 — 🖥️ Computer use sul PC e Chrome per la sessione operativa (Claude per @francesco)
+
+- Richiesta di @francesco: al telefono chiedere a Piper cose come «vedi se ho messaggi su Slack» o «apri WebStorm
+  e lancia questi comandi», con un computer use completo, non solo il browser.
+- Il PC ha GNOME su **Xorg** (`DISPLAY=:0`, `XAUTHORITY=/run/user/1000/gdm/Xauthority`), due monitor 1920x1080.
+  `modem/pc-desktop.py` (nel venv `~/nura-voice/venv`, con python-xlib, mss e Pillow, senza sudo): screenshot
+  di un monitor ridotti a 1600 px, click, doppio click, tasto destro, scrittura (anche caratteri accentati, con un
+  keycode libero rimappato), combinazioni di tasti, scorrimento, elenco e attivazione delle finestre, avvio di
+  programmi. Le coordinate valgono per l'ultimo screenshot. Il ponte passa `DISPLAY` e `XAUTHORITY` alle sessioni.
+- Claude in Chrome: nella sessione operativa `--chrome`, sul browser scelto da @francesco (deviceId nella
+  configurazione locale, chiave `chrome`). Prova non interattiva riuscita fino alla scelta del browser.
+- `voice-ops.md`: ciclo screenshot → una azione → verifica; mai digitare password o segreti; con lo schermo bloccato
+  dirlo e basta; conferma a voce prima di mandare messaggi o chiudere lavoro non salvato.
+- Limite: al primo screenshot lo schermo era **bloccato** (schermata con l'orologio di GNOME): finché resta bloccato
+  il computer use non può agire, e lo sblocco richiede la password, esclusa.
+
 ### 2026-11-18 — 🧠 Cervello piccolo sul telefono con llama.cpp, avviato solo se serve (Claude per @francesco)
 
 - `llama-server` e `llama-cli` 1.0.0 da Alpine edge (con `libggml` 1.0.0: dipendenze coerenti, a differenza di

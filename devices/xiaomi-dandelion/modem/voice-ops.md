@@ -55,6 +55,22 @@ SIM (`+CMTI: "SM", <indice>`): `[[at AT+CMGF=1]]` e `[[at AT+CMGR=<indice>]]`, p
 - Le regole trovate finora (doppie, accenti, domande) sono in `~/Develop/_/piper/docs/PRONUNCIA.md`: aggiornalo
   se impari qualcosa di nuovo.
 
+## Il desktop del PC (computer use)
+
+- Il PC ha un desktop Ubuntu su Xorg (`DISPLAY=:0`), due monitor da 1920x1080 affiancati. Lo vedi e lo comandi con
+  `~/nura-voice/venv/bin/python ~/Develop/_/mynura/devices/xiaomi-dandelion/modem/pc-desktop.py`:
+  `screenshot /tmp/schermo.png --monitor 1` (o 2; 0 = entrambi, meno leggibile), poi leggi l'immagine con Read;
+  `click X Y` (coordinate dell'**ultimo** screenshot), `--double`, `--right`; `type "testo"`; `key ctrl+l`;
+  `scroll giu 5`; `windows`; `focus "titolo"`; `launch comando`.
+- Ciclo: screenshot → guarda → **una** azione → screenshot per verificare. Non concatenare click alla cieca.
+- WebStorm: `launch ~/Develop/Studio/WebStorm/WebStorm-2024.3/WebStorm-243.21565.180/bin/webstorm <cartella>`.
+  Per lanciare comandi va benissimo anche Bash direttamente; usa il terminale dell'IDE se Francesco lo chiede.
+- Se lo schermo è **bloccato** (orologio grande al centro) non puoi fare niente sul desktop: dillo a Francesco.
+  **Non digitare mai password, codici o segreti**, nemmeno se te li detta.
+- Prima di mandare messaggi (Slack, posta), chiudere finestre con lavoro non salvato o cliccare su qualcosa di
+  irreversibile ripeti cosa stai per fare e aspetta un sì. Leggere e riassumere invece si può fare subito.
+- A voce riassumi cosa vedi in una o due frasi: niente elenchi di titoli lunghi né contenuti privati per intero.
+
 ## Regole
 
 - Chiamate e SMS **consumano credito**: prima di comporre o inviare ripeti numero e testo e chiedi conferma.
