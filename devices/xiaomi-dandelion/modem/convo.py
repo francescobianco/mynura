@@ -18,6 +18,11 @@ La risposta arriva da brain-pc.py una frase alla volta: si sintetizza e si mette
 mtkaudio suona senza pause), e alla fine si suona il segnale "tocca a te" (assets/fine.raw, kalimba come
 l'attacco del progetto speaker). Le azioni ([[riaggancia]], ...) si eseguono al loro posto.
 
+Modalità autonoma: se il ponte non dà battito, Piper non resta muta. Capisce pochi comandi fissi riconosciuti nel
+testo trascritto qui (ora, data, batteria, rete, ripeti, aiuto, saluto e riaggancio) e fa da **segreteria**:
+registra audio e testo del messaggio in ~/nura/segreteria; quando il ponte torna, brain-pc.py li preleva e li
+riferisce a Francesco alla sua prima chiamata.
+
 Uso: sudo python3 convo.py
 """
 import base64
@@ -43,6 +48,12 @@ STT_WAIT = 3.0         # secondi di attesa del testo dal PC, poi trascrizione lo
 STT_LOCAL = os.environ.get('STT') == 'local'
 ALIVE_S = 15           # il ponte scrive un battito in /tmp/brain.a ogni 5 s: oltre 15 s di silenzio è fermo
 DOWN = 'Scusa, il mio cervello sul computer non risponde in questo momento. Riprova tra un po\'.'
+AUTONOMA = ('Il mio cervello sul computer non risponde, ma posso aiutarti lo stesso: posso dirti l\'ora, la data, '
+            'come sta il telefono, oppure registrare un messaggio per Francesco. Dimmi pure.')
+SEGRETERIA = f'{HOME}/nura/segreteria'
+GIORNI = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica']
+MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre',
+        'novembre', 'dicembre']
 
 
 def brain_alive():
@@ -112,6 +123,7 @@ def render_fixed():
     render(GREETING, f'{CT}/saluto.raw')
     render('Ci sei? Non ti sento.', f'{CT}/cisei.raw')
     render(DOWN, f'{CT}/giu.raw')
+    render(AUTONOMA, f'{CT}/autonoma.raw')
 
 
 # ---------------------------------------------------------------- ascolto
@@ -380,6 +392,125 @@ def cancel(qid):
         f.write(json.dumps({'type': 'cancel', 'id': qid, 'call': call['id']}) + '\n')
 
 
+# ---------------------------------------------------------------- modalità autonoma
+def say_now(text, name='auto.raw'):
+    """Una frase composta al momento (circa 1 s di sintesi), poi il segnale di fine."""
+    render(text, f'{CT}/{name}')
+    log(f'autonoma: {text}')
+    return play_files([name, 'fine.raw'] if os.path.exists(f'{CT}/fine.raw') else [name])
+
+
+def battery():
+    b = '/sys/class/power_supply/battery'
+    def rd(f):
+        try:
+            return open(f'{b}/{f}').read().strip()
+        except OSError:
+            return ''
+    cap, volt, stat, temp = rd('capacity'), rd('voltage_now'), rd('status'), rd('temp')
+    parts = []
+    if cap and cap != '-1':
+        parts.append(f'La batteria è al {cap} per cento')
+    elif volt:
+        v = int(volt) / 1e6
+        stima = max(0, min(100, round((v - 3.45) / (4.35 - 3.45) * 100)))
+        parts.append(f'La percentuale non la leggo ancora, ma dalla tensione di {f'{v:.2f}'.replace('.', ',')} volt stimo circa il {stima} per cento')
+    stati = {'Charging': 'in carica', 'Full': 'carica e collegata alla corrente', 'Discharging': 'scollegata dalla corrente',
+             'Not charging': 'collegata ma non in carica'}
+    if stat in stati:
+        parts.append(f'ed è {stati[stat]}')
+    if temp:
+        parts.append(f'La temperatura è di {int(temp) / 10:.0f} gradi')
+    return ' '.join(parts[:2]) + '. ' + (parts[2] + '.' if len(parts) > 2 else '')
+
+
+def network():
+    """Segnale e operatore chiesti al modem tramite answer.py, risposta letta dal suo log."""
+    log_path = '/tmp/answer.log'
+    pos = os.path.getsize(log_path)
+    at('AT+CSQ', 'AT+COPS?', pause=0.2)
+    time.sleep(1.0)
+    with open(log_path, 'rb') as f:
+        f.seek(pos)
+        txt = f.read().decode(errors='replace')
+    csq = re.search(r'\+CSQ:\s*(\d+)', txt)
+    cops = re.search(r'\+COPS:\s*\d+,\d+,"([^"]*)",(\d+)', txt)
+    parts = []
+    if cops:
+        tech = {'7': 'in 4G', '2': 'in 3G', '0': 'in 2G'}.get(cops.group(2), '')
+        parts.append(f'Sono registrata sulla rete {tech}'.strip())
+    if csq and csq.group(1) != '99':
+        q = int(csq.group(1))
+        giudizio = 'debole' if q < 10 else 'discreto' if q < 18 else 'buono'
+        parts.append(f'con un segnale {giudizio}, {q} su 31')
+    return (' '.join(parts) + '.') if parts else 'Non riesco a leggere lo stato della rete in questo momento.'
+
+
+def voicemail():
+    """Registra un messaggio: audio dalla registrazione continua, testo dalle frasi trascritte."""
+    say_now('Parla pure dopo questo messaggio. Quando hai finito resta in silenzio qualche secondo.', 'msg.raw')
+    cap = f'{CT}/{CAPTURE}'
+    start, t0, texts, last = os.path.getsize(cap), time.time(), [], time.time()
+    while active.is_set() and time.time() - t0 < 90:
+        try:
+            texts.append(utterances.get(timeout=0.5))
+            last = time.time()
+        except queue.Empty:
+            if time.time() - last > (6 if texts else 10):
+                break
+    end = os.path.getsize(cap)
+    if not texts:
+        say_now('Non ho sentito nessun messaggio. Se vuoi riprovare, dimmi lascia un messaggio.', 'msg.raw')
+        return
+    os.makedirs(SEGRETERIA, exist_ok=True)
+    stamp = time.strftime('%Y%m%d-%H%M%S')
+    with open(cap, 'rb') as f:
+        f.seek(start)
+        audio = f.read(end - start)
+    with open(f'{SEGRETERIA}/{stamp}.raw', 'wb') as f:
+        f.write(audio)
+    with open(f'{SEGRETERIA}/{stamp}.json', 'w') as f:
+        json.dump({'quando': time.strftime('%Y-%m-%d %H:%M'), 'chi': call['caller'], 'testo': ' '.join(texts),
+                   'audio': f'{stamp}.raw', 'secondi': round(len(audio) / 32000)}, f, ensure_ascii=False)
+    log(f'segreteria: messaggio {stamp} di {len(audio) // 32000} s')
+    say_now('Messaggio registrato. Lo riferisco a Francesco appena torno in contatto con lui. Vuoi altro?', 'msg.raw')
+
+
+def autonomous(text, last=['']):
+    """Un turno senza ponte: comandi fissi riconosciuti dalle parole. Restituisce False se la chiamata va chiusa."""
+    t = text.lower()
+    has = lambda *ws: any(w in t for w in ws)
+    now = time.localtime()
+    if has('messaggio', 'segreteria', 'lasciare', 'lascia', 'riferire', 'riferisci'):
+        voicemail()
+        return True
+    # Solo formule chiare: un "ciao" all'inizio della chiamata non deve chiuderla
+    if has('arrivederci', 'riaggancia', 'chiudi la chiamata', 'puoi chiudere', 'ciao ciao', 'a presto',
+           'devo andare', 'basta così'):
+        say_now('Va bene, a presto!', 'auto.raw')
+        at('ATH')
+        active.clear()
+        return False
+    if has('ripeti', 'come hai detto', 'non ho capito') and last[0]:
+        reply = last[0]
+    elif has('che ore', 'ora è', "ore sono", 'orario'):
+        reply = f'Sono le {now.tm_hour} e {now.tm_min:02d}.' if now.tm_min else f'Sono le {now.tm_hour} in punto.'
+    elif has('che giorno', 'data', 'oggi'):
+        reply = f'Oggi è {GIORNI[now.tm_wday]} {now.tm_mday} {MESI[now.tm_mon - 1]} {now.tm_year}.'
+    elif has('batteria', 'carica'):
+        reply = battery()
+    elif has('rete', 'segnale', 'campo', 'linea', 'operatore'):
+        reply = network()
+    elif has('stato', 'come stai', 'telefono'):
+        reply = battery() + ' ' + network()
+    else:
+        reply = ('Senza il mio cervello capisco solo poche cose: l\'ora, la data, la batteria, la rete, oppure posso '
+                 'registrare un messaggio per Francesco. Cosa preferisci?')
+    last[0] = reply
+    say_now(reply)
+    return True
+
+
 # ---------------------------------------------------------------- chiamata
 def conversation():
     while not utterances.empty():
@@ -393,6 +524,11 @@ def conversation():
     mtk(f'cstart /data/local/tmp/{CAPTURE}')
     threading.Thread(target=listener, daemon=True).start()
     play_files(['saluto.raw'])
+    autonomous_intro = [False]
+    if not brain_alive():  # già all'inizio senza ponte: lo si dice subito
+        autonomous_intro[0] = True
+        log('ponte fermo: modalità autonoma')
+        play_files(['autonoma.raw'])
     asked_quiet, note = False, None
     while active.is_set():
         try:
@@ -405,9 +541,12 @@ def conversation():
         asked_quiet = False
         while not utterances.empty():  # frasi arrivate insieme: una domanda sola
             text += ' ' + utterances.get()
-        if not brain_alive():  # il ponte sul PC è fermo: lo si dice subito invece di aspettare
-            log('ponte fermo: avviso chi chiama')
-            play_files(['giu.raw'])
+        if not brain_alive():  # il ponte sul PC è fermo: modalità autonoma
+            if not autonomous_intro[0]:
+                autonomous_intro[0] = True
+                log('ponte fermo: modalità autonoma')
+                play_files(['autonoma.raw'])
+            autonomous(text)
             continue
         qid, items = ask(text, note=note)
         interrupted, said = speak(items)

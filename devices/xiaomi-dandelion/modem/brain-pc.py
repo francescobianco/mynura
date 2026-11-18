@@ -359,6 +359,39 @@ def stt_service(phone):
             log(f'   trascritto in {time.time() - t:.2f} s: {shown}')
 
 
+INBOX = os.path.expanduser('~/nura-voice/segreteria')
+
+
+def collect_voicemail():
+    """Ogni 30 s preleva dal telefono i messaggi della segreteria (registrati senza ponte) in ~/nura-voice/segreteria.
+    Quelli prelevati vengono segnati sul telefono (.json -> .json.preso)."""
+    os.makedirs(INBOX, exist_ok=True)
+    while True:
+        r = subprocess.run(SSH + ['cd ~/nura/segreteria 2>/dev/null && ls *.json 2>/dev/null'], capture_output=True,
+                           text=True)
+        for name in r.stdout.split():
+            stamp = name[:-5]
+            files = [f'{stamp}.json', f'{stamp}.raw']
+            t = subprocess.run(SSH + [f'cd ~/nura/segreteria && tar -cf - {" ".join(files)}'], capture_output=True)
+            if t.returncode == 0 and subprocess.run(['tar', '-C', INBOX, '-xf', '-'], input=t.stdout).returncode == 0:
+                subprocess.run(SSH + [f'cd ~/nura/segreteria && mv {stamp}.json {stamp}.json.preso'], capture_output=True)
+                log(f'segreteria: prelevato il messaggio {stamp}')
+        time.sleep(30)
+
+
+def unread_voicemail():
+    """Messaggi non ancora riferiti a Francesco; li segna come riferiti."""
+    out = []
+    for name in sorted(os.listdir(INBOX)) if os.path.isdir(INBOX) else []:
+        if name.endswith('.json') and not os.path.exists(os.path.join(INBOX, name + '.riferito')):
+            try:
+                out.append(json.load(open(os.path.join(INBOX, name))))
+                open(os.path.join(INBOX, name + '.riferito'), 'w').close()
+            except (OSError, ValueError):
+                pass
+    return out
+
+
 def heartbeat(phone):
     """Battito ogni 5 s in /tmp/brain.a: convo.py capisce dall'ora di modifica del file se il ponte è vivo."""
     while True:
@@ -376,6 +409,7 @@ def main():
     phone = Phone()
     threading.Thread(target=stt_service, args=(phone,), daemon=True).start()
     threading.Thread(target=heartbeat, args=(phone,), daemon=True).start()
+    threading.Thread(target=collect_voicemail, daemon=True).start()
     ready = Session()  # sessione già avviata per la prossima chiamata
     calls = {}
     p = subprocess.Popen(SSH + ['touch /tmp/brain.q /tmp/brain.a; tail -n0 -F /tmp/brain.q'],
@@ -414,6 +448,16 @@ def main():
         log(f'<- {text}')
         caller_ok = re.sub(r'\D', '', q.get('caller', ''))[-10:] in CALLERS
         sess.caller_ok = caller_ok
+        if caller_ok and not getattr(sess, 'told_voicemail', False):
+            sess.told_voicemail = True
+            msgs = unread_voicemail()
+            if msgs:  # messaggi lasciati quando il ponte era fermo: Francesco li sente alla sua prima frase
+                elenco = '; '.join(f'alle {m.get("quando", "?")[-5:]} del {m.get("quando", "?")[:10]} da '
+                                   f'{m.get("chi") or "numero sconosciuto"}: «{m.get("testo", "")}»' for m in msgs)
+                text = (f'(Il sistema dice: mentre eri irraggiungibile la segreteria ha registrato {len(msgs)} '
+                        f'messaggi: {elenco}. Prima rispondi a Francesco, poi diglielo in breve: chi e cosa, '
+                        f'con il numero letto a gruppi di cifre.) {text}')
+                log(f'   segreteria: {len(msgs)} messaggi riferiti a Francesco')
         if found and not sess.unlocked:
             if not caller_ok:
                 log('   parola d\'ordine da un numero non autorizzato: resto bloccato')

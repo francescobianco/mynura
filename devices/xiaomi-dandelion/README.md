@@ -141,6 +141,21 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-18 — 📟 Modalità autonoma senza ponte: comandi fissi e segreteria (Claude per @francesco)
+
+- Richiesta di @francesco: se Piper non trova né il ponte né (in futuro) la VPS, deve avere un minimo di
+  autonomia. Proposti tre livelli (comandi fissi e segreteria; modello linguistico minuscolo con llama.cpp;
+  riparazione automatica via SSH verso il PC); scelto per ora il primo.
+- In `convo.py`, se manca il battito del ponte: Piper lo dice («posso dirti l'ora, la data, come sta il telefono,
+  oppure registrare un messaggio») e riconosce nel testo trascritto in locale pochi comandi fissi: ora, data,
+  batteria (percentuale stimata dalla tensione, perché `capacity` è -1; stato di carica; temperatura), rete
+  (`AT+CSQ` e `AT+COPS?` tramite answer.py), ripeti, aiuto, saluto con riaggancio (solo formule chiare, non un
+  semplice «ciao»). Ogni risposta finisce con il segnale «tocca a te».
+- **Segreteria**: «lascia un messaggio» → registra finché chi chiama tace per 6 s (al massimo 90 s); audio presi
+  dalla registrazione continua e testo trascritto in `~/nura/segreteria/<data>.raw` e `.json` (quando, chi, testo).
+- `brain-pc.py` ogni 30 s preleva i messaggi in `~/nura-voice/segreteria` sul PC (fuori dal repository) e li segna
+  sul telefono; alla prima frase della chiamata successiva dal numero autorizzato Claude li riferisce in breve.
+
 ### 2026-11-18 — Piper non rispondeva: ponte fermo, segnale di vita e servizio di sistema (Claude per @francesco)
 
 - Quattro chiamate di @francesco senza risposta. Il ponte sul PC girava dentro la sessione di Claude Code di ieri
