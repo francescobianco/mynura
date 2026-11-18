@@ -359,11 +359,23 @@ def stt_service(phone):
             log(f'   trascritto in {time.time() - t:.2f} s: {shown}')
 
 
+def heartbeat(phone):
+    """Battito ogni 5 s in /tmp/brain.a: convo.py capisce dall'ora di modifica del file se il ponte è vivo."""
+    while True:
+        try:
+            phone.send({'ping': int(time.time())})
+        except Exception as e:  # SSH caduto: il servizio di sistema riavvia il ponte
+            log(f'battito non inviato: {e}')
+            os._exit(1)
+        time.sleep(5)
+
+
 def main():
     threading.Thread(target=sync_pronuncia, daemon=True).start()
     log(f'ponte verso {PHONE}, chiacchiera {CHAT_MODEL}, operativo {OPS_MODEL}, cartella {WORKDIR}')
     phone = Phone()
     threading.Thread(target=stt_service, args=(phone,), daemon=True).start()
+    threading.Thread(target=heartbeat, args=(phone,), daemon=True).start()
     ready = Session()  # sessione già avviata per la prossima chiamata
     calls = {}
     p = subprocess.Popen(SSH + ['touch /tmp/brain.q /tmp/brain.a; tail -n0 -F /tmp/brain.q'],
@@ -382,6 +394,8 @@ def main():
                 log(f'   interrotto da chi chiama: {q.get("id")}')
             else:
                 questions.put(q)
+        log('collegamento con il telefono caduto: esco, il servizio riavvia il ponte')
+        os._exit(1)
     threading.Thread(target=reader, daemon=True).start()
     while True:
         q = questions.get()

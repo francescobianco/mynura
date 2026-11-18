@@ -141,6 +141,19 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-18 — Piper non rispondeva: ponte fermo, segnale di vita e servizio di sistema (Claude per @francesco)
+
+- Quattro chiamate di @francesco senza risposta. Il ponte sul PC girava dentro la sessione di Claude Code di ieri
+  e si era fermato con lei. Il telefono trascriveva (in locale, dopo 3 s di attesa del PC) ma nessuno rispondeva.
+- Difetto in `convo.py`: Piper risultava «in parlata» già mentre aspettava la risposta, così ogni frase nuova
+  («mi senti?») contava come interruzione e annullava una risposta mai partita. Ora «speaking» vale solo da
+  quando la prima frase è in coda a mtkaudio.
+- Segnale di vita: `brain-pc.py` scrive un battito (`{"ping"}`) in `/tmp/brain.a` ogni 5 s; se il file non cambia
+  da 15 s il ponte è fermo e `convo.py` lo dice subito a chi chiama (frase fissa `giu.raw`) e trascrive in locale
+  senza aspettare. Se cade l'SSH il ponte esce, così chi lo gestisce lo riavvia.
+- `modem/nura-brain.service`: il ponte come servizio utente di systemd (riavvio automatico). L'installazione la fa
+  @francesco: comandi nel file.
+
 ### 2026-11-17 — 🎙️ Trascrizione sul PC con il modello grande, il piccolo resta di riserva (Claude per @francesco)
 
 - Il telefono continua a decidere da solo quando chi chiama parla (e a interrompere Piper), ma l'audio di ogni frase

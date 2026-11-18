@@ -1,0 +1,18 @@
+# Ponte di Piper sul PC (brain-pc.py) come servizio utente di systemd: sopravvive alla chiusura delle sessioni
+# di Claude Code e riparte da solo se cade il collegamento con il telefono.
+# Installazione (dalla cartella modem/):
+#   mkdir -p ~/.config/systemd/user && ln -sf "$PWD/nura-brain.service" ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now nura-brain
+# Log: journalctl --user -u nura-brain -f
+[Unit]
+Description=Ponte di Piper tra il telefono con Nura e Claude Code
+After=network.target
+
+[Service]
+ExecStart=%h/nura-voice/venv/bin/python -u %h/Develop/_/mynura/devices/xiaomi-dandelion/modem/brain-pc.py
+Restart=always
+RestartSec=5
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target

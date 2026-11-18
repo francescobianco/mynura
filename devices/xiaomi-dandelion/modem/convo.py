@@ -41,6 +41,15 @@ Q, A = '/tmp/brain.q', '/tmp/brain.a'
 STT_Q = '/tmp/stt.q'   # audio delle frasi verso il PC
 STT_WAIT = 3.0         # secondi di attesa del testo dal PC, poi trascrizione locale
 STT_LOCAL = os.environ.get('STT') == 'local'
+ALIVE_S = 15           # il ponte scrive un battito in /tmp/brain.a ogni 5 s: oltre 15 s di silenzio è fermo
+DOWN = 'Scusa, il mio cervello sul computer non risponde in questo momento. Riprova tra un po\'.'
+
+
+def brain_alive():
+    try:
+        return time.time() - os.path.getmtime(A) < ALIVE_S
+    except OSError:
+        return False
 AT_FIFO = '/tmp/answer.cmd'  # comandi AT, inviati da answer.py che tiene aperta la porta del modem
 CAPTURE = 'cattura.raw'
 GREETING = 'Ciao, sono Piper. Dimmi pure.'
@@ -102,6 +111,7 @@ def render(text, raw):
 def render_fixed():
     render(GREETING, f'{CT}/saluto.raw')
     render('Ci sei? Non ti sento.', f'{CT}/cisei.raw')
+    render(DOWN, f'{CT}/giu.raw')
 
 
 # ---------------------------------------------------------------- ascolto
@@ -179,7 +189,7 @@ def transcriber(frames, n=[0]):
     """Una frase: l'audio va al PC mentre arriva (o a Vosk qui), il testo finale va in `utterances`."""
     n[0] += 1
     uid = f'{call["id"]}-u{n[0]}'
-    remote = not STT_LOCAL
+    remote = not STT_LOCAL and brain_alive()
     pos = os.path.getsize(A)
     if remote:
         stt_send({'t': 'b', 'u': uid})
@@ -274,8 +284,7 @@ def speak(items):
     Restituisce (interrotta, frasi dette per intero)."""
     pos = os.path.getsize(LOG)
     barge.clear()
-    speaking.set()
-    queued, said, n = [], [], 0
+    queued, said, n = [], [], 0  # "speaking" solo da quando la prima frase è in coda, non durante l'attesa
 
     def collect():
         nonlocal pos
@@ -306,6 +315,7 @@ def speak(items):
             if barge.is_set():
                 break
             queued.append(item)
+            speaking.set()
             mtk(f'mplay /data/local/tmp/{name}')
         end = time.time() + 120  # aspetta che finisca di suonare (o l'interruzione)
         while queued and active.is_set() and time.time() < end:
@@ -358,8 +368,10 @@ def ask(text, n=[0], note=None):
                 if a.get('final'):
                     return
             time.sleep(0.03)
+            if not got and not brain_alive():
+                break
         if not got and not barge.is_set() and active.is_set():
-            yield 'Scusa, il mio cervello sul computer non risponde. Riprova tra poco.'
+            yield DOWN
     return qid, items()
 
 
@@ -393,6 +405,10 @@ def conversation():
         asked_quiet = False
         while not utterances.empty():  # frasi arrivate insieme: una domanda sola
             text += ' ' + utterances.get()
+        if not brain_alive():  # il ponte sul PC è fermo: lo si dice subito invece di aspettare
+            log('ponte fermo: avviso chi chiama')
+            play_files(['giu.raw'])
+            continue
         qid, items = ask(text, note=note)
         interrupted, said = speak(items)
         note = None
