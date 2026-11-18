@@ -141,6 +141,23 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
 
+### 2026-11-18 — 🧠 Cervello piccolo sul telefono con llama.cpp, avviato solo se serve (Claude per @francesco)
+
+- `llama-server` e `llama-cli` 1.0.0 da Alpine edge (con `libggml` 1.0.0: dipendenze coerenti, a differenza di
+  whisper.cpp). RAM disponibile sul telefono circa 1 GB.
+- Confronto sul telefono (6 thread, contesto 1024, tre domande in italiano):
+  | Modello | Caricamento | RAM | Prompt | Generazione | Qualità |
+  |---|---|---|---|---|---|
+  | Gemma 3 270M Q4_K_M (253 MB) | 5,1 s | 322 MB | 32-35 tok/s | 15-17 tok/s | italiano corretto, conosce poco |
+  | Qwen2.5 0.5B Q4_K_M (491 MB) | 4,7 s | 544 MB | 16 tok/s | 9 tok/s | inventa (fotosintesi = «riconoscere immagini») |
+  Scelto Gemma 3 270M. Con la storia dei turni o con istruzioni di sistema lunghe ripete «Ciao!» e si perde;
+  rende meglio con un prefisso breve nella sola domanda («Rispondi in italiano con una sola frase breve.»):
+  risposte in 0,5-2 s. Sui fatti sbaglia («gli scacchi sono giochi di carte»).
+- In `convo.py`: `SmallBrain` avvia `llama-server` in sottofondo solo quando una chiamata trova il ponte fermo (o il
+  ponte cade durante la chiamata) e lo spegne a fine chiamata. I comandi fissi hanno la precedenza; le richieste
+  di azioni ricevono una risposta fissa; sulle domande Piper premette «con il mio cervello piccolo potrei sbagliare».
+- Modello in `~/nura/llm` sul telefono; `piper.sh` lo copia da `~/nura-voice/llm` sul PC se manca.
+
 ### 2026-11-18 — 📟 Modalità autonoma senza ponte: comandi fissi e segreteria (Claude per @francesco)
 
 - Richiesta di @francesco: se Piper non trova né il ponte né (in futuro) la VPS, deve avere un minimo di

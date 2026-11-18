@@ -21,7 +21,9 @@ l'attacco del progetto speaker). Le azioni ([[riaggancia]], ...) si eseguono al 
 Modalità autonoma: se il ponte non dà battito, Piper non resta muta. Capisce pochi comandi fissi riconosciuti nel
 testo trascritto qui (ora, data, batteria, rete, ripeti, aiuto, saluto e riaggancio) e fa da **segreteria**:
 registra audio e testo del messaggio in ~/nura/segreteria; quando il ponte torna, brain-pc.py li preleva e li
-riferisce a Francesco alla sua prima chiamata.
+riferisce a Francesco alla sua prima chiamata. Le frasi che non sono comandi vanno a un modello linguistico
+minuscolo sul telefono (llama.cpp, Gemma 3 270M, ~/nura/llm): si avvia solo quando serve (chiamata senza ponte),
+in sottofondo (circa 5 s, 320 MB), e si spegne a fine chiamata. Solo chiacchiera, nessuna azione.
 
 Uso: sudo python3 convo.py
 """
@@ -49,8 +51,15 @@ STT_LOCAL = os.environ.get('STT') == 'local'
 ALIVE_S = 15           # il ponte scrive un battito in /tmp/brain.a ogni 5 s: oltre 15 s di silenzio è fermo
 DOWN = 'Scusa, il mio cervello sul computer non risponde in questo momento. Riprova tra un po\'.'
 AUTONOMA = ('Il mio cervello sul computer non risponde, ma posso aiutarti lo stesso: posso dirti l\'ora, la data, '
-            'come sta il telefono, oppure registrare un messaggio per Francesco. Dimmi pure.')
+            'come sta il telefono, registrare un messaggio per Francesco, o fare due chiacchiere con un cervello '
+            'più piccolo. Dimmi pure.')
 SEGRETERIA = f'{HOME}/nura/segreteria'
+LLM_MODEL = f'{HOME}/nura/llm/gemma-3-270m-it-Q4_K_M.gguf'
+LLM_URL = 'http://127.0.0.1:8088'
+LLM_SYSTEM = ('Sei Piper, l\'assistente vocale di Francesco al telefono. Il tuo cervello principale non è raggiungibile '
+              'e stai usando un cervello piccolo sul telefono. Rispondi in italiano con una o due frasi brevissime, '
+              'come si parla, senza elenchi né simboli. Non puoi fare azioni né cercare informazioni: se ti chiedono '
+              'qualcosa di difficile, dillo con semplicità e proponi di lasciare un messaggio per Francesco.')
 GIORNI = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica']
 MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre',
         'novembre', 'dicembre']
@@ -392,6 +401,77 @@ def cancel(qid):
         f.write(json.dumps({'type': 'cancel', 'id': qid, 'call': call['id']}) + '\n')
 
 
+# ---------------------------------------------------------------- cervello piccolo (llama.cpp)
+class SmallBrain:
+    """llama-server avviato solo quando serve, spento a fine chiamata. Ricorda gli ultimi turni della chiamata."""
+
+    def __init__(self):
+        self.proc, self.ready, self.history = None, threading.Event(), []
+
+    def start(self):
+        if self.proc or not os.path.exists(LLM_MODEL):
+            return
+        import shutil
+        if not shutil.which('llama-server'):
+            return
+        log('cervello piccolo: avvio')
+        self.ready.clear()
+        self.proc = subprocess.Popen(['llama-server', '-m', LLM_MODEL, '-c', '1024', '-t', '6', '--host',
+                                      '127.0.0.1', '--port', '8088', '--no-webui'],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        threading.Thread(target=self._wait_ready, daemon=True).start()
+
+    def _wait_ready(self):
+        import urllib.request
+        t = time.time()
+        while self.proc and self.proc.poll() is None and time.time() - t < 60:
+            try:
+                if json.load(urllib.request.urlopen(f'{LLM_URL}/health', timeout=1)).get('status') == 'ok':
+                    self.ready.set()
+                    log(f'cervello piccolo: pronto in {time.time() - t:.1f} s')
+                    return
+            except Exception:
+                pass
+            time.sleep(0.2)
+
+    def ask(self, text):
+        import urllib.request
+        self.start()
+        if not self.ready.wait(12):
+            return None
+        # Gemma 3 270M non ha un ruolo di sistema e con istruzioni lunghe o con la storia dei turni si perde (copia
+        # le sue risposte, saluta a ogni frase): rende meglio con un prefisso breve e la sola domanda.
+        req = urllib.request.Request(f'{LLM_URL}/v1/chat/completions', json.dumps({
+            'messages': [{'role': 'user', 'content': f'Rispondi in italiano con una sola frase breve. {text}'}],
+            'max_tokens': 50, 'temperature': 0.4, 'repeat_penalty': 1.2, 'cache_prompt': True}).encode(),
+            {'Content-Type': 'application/json'})
+        t = time.time()
+        try:
+            out = json.load(urllib.request.urlopen(req, timeout=40))['choices'][0]['message']['content']
+        except Exception as e:
+            log(f'cervello piccolo: errore {e}')
+            return None
+        out = re.sub(r'[*#_`~>|]', '', out)  # niente segni di formattazione da leggere
+        out = ''.join(c for c in out if c.isalnum() or c.isspace() or c in '.,;:!?\'"-()«»àèéìòùÀÈÉÌÒÙ')  # né emoji
+        out = re.split(r'(?<=[.!?])\s+', ' '.join(out.split()))[0].strip()  # una frase sola
+        log(f'cervello piccolo: {time.time() - t:.1f} s')
+        return out or None
+
+    def stop(self):
+        if self.proc:
+            self.proc.terminate()
+            try:
+                self.proc.wait(5)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()
+            log('cervello piccolo: spento')
+        self.proc, self.history = None, []
+        self.ready.clear()
+
+
+small = SmallBrain()
+
+
 # ---------------------------------------------------------------- modalità autonoma
 def say_now(text, name='auto.raw'):
     """Una frase composta al momento (circa 1 s di sintesi), poi il segnale di fine."""
@@ -503,9 +583,16 @@ def autonomous(text, last=['']):
         reply = network()
     elif has('stato', 'come stai', 'telefono'):
         reply = battery() + ' ' + network()
+    elif has('accendi', 'spegni', 'chiama', 'manda', 'invia', 'apri', 'cerca', 'prenota', 'compra', 'controlla'):
+        reply = ('Adesso, senza il mio cervello sul computer, non posso fare azioni. Se vuoi lascia un messaggio '
+                 'e lo riferisco a Francesco.')
     else:
-        reply = ('Senza il mio cervello capisco solo poche cose: l\'ora, la data, la batteria, la rete, oppure posso '
-                 'registrare un messaggio per Francesco. Cosa preferisci?')
+        ans = small.ask(text)
+        # Il cervello piccolo (270 milioni di parametri) sbaglia spesso i fatti: sulle domande lo dice
+        if ans and re.search(r'\b(chi|che cos|cos è|cosa|quando|dove|quanto|quanti|perché|come mai)\b', t):
+            ans = 'Con il mio cervello piccolo potrei sbagliare, ma direi così: ' + ans
+        reply = ans or ('Senza il mio cervello capisco solo poche cose: l\'ora, la data, la batteria, '
+                                    'la rete, oppure posso registrare un messaggio per Francesco. Cosa preferisci?')
     last[0] = reply
     say_now(reply)
     return True
@@ -526,6 +613,7 @@ def conversation():
     play_files(['saluto.raw'])
     autonomous_intro = [False]
     if not brain_alive():  # già all'inizio senza ponte: lo si dice subito
+        small.start()
         autonomous_intro[0] = True
         log('ponte fermo: modalità autonoma')
         play_files(['autonoma.raw'])
@@ -542,6 +630,7 @@ def conversation():
         while not utterances.empty():  # frasi arrivate insieme: una domanda sola
             text += ' ' + utterances.get()
         if not brain_alive():  # il ponte sul PC è fermo: modalità autonoma
+            small.start()  # in sottofondo: pronto per le frasi che non sono comandi
             if not autonomous_intro[0]:
                 autonomous_intro[0] = True
                 log('ponte fermo: modalità autonoma')
@@ -556,6 +645,7 @@ def conversation():
             note = ' '.join(said) if said else '(non avevi ancora detto niente)'
             log(f'interrotta dopo: {note}')
     mtk('cstop')
+    small.stop()  # libera la memoria
     log('conversazione finita')
 
 

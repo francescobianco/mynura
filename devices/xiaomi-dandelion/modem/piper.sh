@@ -118,9 +118,18 @@ fi
 pgrep -f "^python3 -u .*answer\.py" >/dev/null && say "risposta automatica: in ascolto" || { say "ERRORE: answer.py"; exit 1; }
 '
 
+LLM_FILE=gemma-3-270m-it-Q4_K_M.gguf  # cervello piccolo per la modalità autonoma (llama.cpp sul telefono)
+
 phone_start() {
     phone true || die "telefono non raggiungibile su $PHONE (cavo USB? rete USB?)"
     copy_to_phone
+    if ! phone "test -s ~/nura/llm/$LLM_FILE" && [[ -s "$HOME/nura-voice/llm/$LLM_FILE" ]]; then
+        echo "  copio il cervello piccolo sul telefono ($LLM_FILE)"
+        phone 'mkdir -p ~/nura/llm'
+        "${SSH[@]/#ssh/scp}" -q "$HOME/nura-voice/llm/$LLM_FILE" "$PHONE:nura/llm/" 2>/dev/null \
+            || scp -q -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                "$HOME/nura-voice/llm/$LLM_FILE" "$PHONE:nura/llm/"
+    fi
     phone_in "sh -s -- ${1:-}" <<<"$PHONE_SCRIPT" || die "avvio sul telefono non riuscito"
 }
 
