@@ -25,7 +25,8 @@ ok()   { printf '\033[1;32m  ✓\033[0m %s\n' "$*"; }
 info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m  !\033[0m %s\n' "$*"; }
 die()  { printf '\033[1;31m  ✗ %s\033[0m\n' "$*" >&2; exit 1; }
-phone() { "${SSH[@]}" "$PHONE" "$@" </dev/null; }
+phone() { "${SSH[@]}" "$PHONE" "$@" </dev/null; }   # comando senza input
+phone_in() { "${SSH[@]}" "$PHONE" "$@"; }           # comando che legge dallo stdin (tar, script)
 
 # ------------------------------------------------------------------ ponte sul PC
 brain_running() { [[ -f "$BRAIN_PID" ]] && kill -0 "$(cat "$BRAIN_PID")" 2>/dev/null; }
@@ -57,7 +58,7 @@ brain_stop() {
 copy_to_phone() {
     tar -C "$HERE" -cf - answer.py convo.py at.py sms.py call.py miui-mount.sh ct-setup.sh ct-start.sh init.rc \
         audio/mtkaudio.c audio/build.sh audio/start.sh assets/fine.raw \
-        | phone 'mkdir -p ~/nura && tar -C ~/nura -xf -' || die "copia sul telefono non riuscita"
+        | phone_in 'mkdir -p ~/nura && tar -C ~/nura -xf -' || die "copia sul telefono non riuscita"
 }
 
 # Script eseguito sul telefono: avvia quello che manca, in ordine. $1 = "riavvia" per fermare prima i servizi.
@@ -120,7 +121,7 @@ pgrep -f "^python3 -u .*answer\.py" >/dev/null && say "risposta automatica: in a
 phone_start() {
     phone true || die "telefono non raggiungibile su $PHONE (cavo USB? rete USB?)"
     copy_to_phone
-    phone "sh -s -- ${1:-}" <<<"$PHONE_SCRIPT" || die "avvio sul telefono non riuscito"
+    phone_in "sh -s -- ${1:-}" <<<"$PHONE_SCRIPT" || die "avvio sul telefono non riuscito"
 }
 
 phone_stop() {
