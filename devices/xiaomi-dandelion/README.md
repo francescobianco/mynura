@@ -239,6 +239,8 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
   capito quello che @francesco dice, per esempio un punteggio per frase e quante volte serve farlo ripetere.
   Da definire meglio. Si parte dalla qualità audio: chiarezza del segnale e copertura delle bande di frequenza,
   con un'analisi dello spettro dell'audio della chiamata.
+  Serve anche poter registrare per intero la conversazione, con entrambe le voci: quella di @francesco e il parlato
+  di Piper.
 - **VPS di emergenza**: se la connessione fisica con il PC cade, il telefono deve poter avviare una sessione di
   Claude Code su una VPS preparata, raggiungibile via SSH, anche per necessità in tempo reale. Idea: il telefono
   apre lui la connessione verso la VPS (tunnel SSH inverso, così la VPS raggiunge il telefono come oggi il PC) e
