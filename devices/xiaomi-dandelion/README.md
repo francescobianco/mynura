@@ -136,10 +136,17 @@ shell di debug su telnet (porta 23). Il `pmbootstrap` attuale non aggiunge il fo
 - [x] Ascoltare chi chiama (stream di ingresso dalla rete, prova dell'eco riuscita)
 - [ ] Conversazione: trascrizione sul telefono, risposta di Claude, voce di Piper
 - [ ] Porta AT `ttyC0` piena quando nessuno la legge: serve un demone sempre in ascolto (RIL o oFono)
+- [ ] Voce di Piper che ogni tanto sparisce: a volte la risposta non viene detta o si interrompe a metà, durante la chiamata (segnalato da @francesco il 2026-11-19, in macchina). Da indagare: `mtkaudio`, buffer dello stream e interruzioni di chi parla
 
 ## Diario
 
 Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
+
+### 2026-11-20 — 🏢 Dove sta chi: Nura e il PC in ufficio, @francesco chiama da fuori (Claude per @francesco)
+
+- Nota di setup: il telefono con Nura e il PC con Claude Code stanno nell'ufficio di @francesco, collegati via USB.
+- @francesco chiama la SIM da fuori (casa, macchina): la sessione operativa va data per scontata a distanza.
+- Nessun cambiamento al codice o ai servizi, solo documentazione.
 
 ### 2026-11-18 — 🖥️ Computer use sul PC e Chrome per la sessione operativa (Claude per @francesco)
 
