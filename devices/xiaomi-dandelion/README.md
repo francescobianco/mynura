@@ -235,6 +235,9 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
   il credito è poco e non va consumato adesso.
 - **Computer use sul PC**: codice pronto (`pc-desktop.py`, Chrome), manca la scelta sul blocco dello schermo e la
   prova in chiamata.
+- **Qualità della trascrizione** (richiesta di @francesco, 2026-11-20): un sistema che misuri quanto bene viene
+  capito quello che @francesco dice, per esempio un punteggio per frase e quante volte serve farlo ripetere.
+  Da definire meglio.
 - **VPS di emergenza**: se la connessione fisica con il PC cade, il telefono deve poter avviare una sessione di
   Claude Code su una VPS preparata, raggiungibile via SSH, anche per necessità in tempo reale. Idea: il telefono
   apre lui la connessione verso la VPS (tunnel SSH inverso, così la VPS raggiunge il telefono come oggi il PC) e
