@@ -242,6 +242,8 @@ Più recente in alto. Formato: `### AAAA-MM-GG — titolo (autore)`.
   Serve anche poter registrare per intero la conversazione, con entrambe le voci: quella di @francesco e il parlato
   di Piper. La registrazione deve essere la conversazione come la vive @francesco: ciò che si sente davvero in
   chiamata, con interruzioni e sovrapposizioni.
+  Con il parlato di Piper registrato come lo sente @francesco si potranno studiare la qualità e la dinamica della
+  conversazione: pause, turni di parola, interruzioni.
 - **VPS di emergenza**: se la connessione fisica con il PC cade, il telefono deve poter avviare una sessione di
   Claude Code su una VPS preparata, raggiungibile via SSH, anche per necessità in tempo reale. Idea: il telefono
   apre lui la connessione verso la VPS (tunnel SSH inverso, così la VPS raggiunge il telefono come oggi il PC) e
